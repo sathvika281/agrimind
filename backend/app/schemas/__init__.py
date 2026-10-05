@@ -246,6 +246,35 @@ class AgentStepOut(BaseModel):
     note: str = ""
 
 
+class Fact(BaseModel):
+    """One language-neutral fact. The frontend turns `kind` (+count/detail) into a sentence; nothing here is prose."""
+
+    kind: str
+    count: int | None = None
+    detail: str = ""
+    used: bool | None = None  # only for 'evidence': was this input really used in the investigation?
+
+
+class HypothesisOut(BaseModel):
+    """A possible explanation (never a diagnosis). No scores: only coded support and gaps."""
+
+    label: str
+    rank: str  # better_supported | also_possible
+    supporting: list[Fact] = Field(default_factory=list)
+    against_or_unknown: list[Fact] = Field(default_factory=list)
+    how_to_tell: str = ""
+
+
+class Dossier(BaseModel):
+    """What the investigation actually looked at and why. Built from the agents' real outputs, no model call."""
+
+    evidence: list[Fact] = Field(default_factory=list)
+    why: list[Fact] = Field(default_factory=list)
+    unknown: list[Fact] = Field(default_factory=list)
+    verify: list[Fact] = Field(default_factory=list)
+    hypotheses: list[HypothesisOut] = Field(default_factory=list)
+
+
 class AnalysisResult(BaseModel):
     """Validated structured AI output. Provider-independent response data.
 
@@ -282,6 +311,12 @@ class AnalysisResult(BaseModel):
     # Agentic investigation (optional: absent on every legacy result)
     sources: list[SourceRef] = Field(default_factory=list)
     agent_steps: list[AgentStepOut] = Field(default_factory=list)
+    dossier: Dossier | None = None
+
+    @field_validator("dossier", mode="before")
+    @classmethod
+    def _dossier(cls, v):
+        return v if isinstance(v, dict) else None
 
     @field_validator("sources", "agent_steps", mode="before")
     @classmethod
@@ -438,6 +473,23 @@ class FarmWeatherOut(BaseModel):
     weather: WeatherOut | None = None
     note: str | None = None
     risks: list["WeatherRiskOut"] = Field(default_factory=list)  # deterministic hints from the real numbers; [] if unavailable
+
+
+class WeatherConditionOut(BaseModel):
+    kind: str
+    value: float
+
+
+class WeatherTipOut(BaseModel):
+    kind: str
+    group: str  # protect | water | watch
+
+
+class WeatherTipsOut(BaseModel):
+    """Coded, non-chemical coping tips for the weather forecast for a farm (Weather tab only)."""
+
+    conditions: list[WeatherConditionOut] = Field(default_factory=list)
+    tips: list[WeatherTipOut] = Field(default_factory=list)
 
 
 class WeatherRiskOut(BaseModel):
@@ -649,3 +701,87 @@ class EventOut(BaseModel):
     @classmethod
     def _utc(cls, v):
         return v.replace(tzinfo=timezone.utc) if v.tzinfo is None else v
+
+
+# ---- Crop Journey / Before vs Now (read-only views over stored checks; qualitative, no scores)
+class JourneyItem(BaseModel):
+    type: str  # check | diary
+    at: datetime
+    analysis_id: int | None = None
+    crop: str = ""
+    issue: str = ""
+    unclear: bool = False
+    severity: str = "unknown"
+    uncertainty_level: str = "unknown"
+    link: str | None = None  # refine | followup
+    kind: str | None = None  # diary entry kind
+    event_id: int | None = None
+
+
+class JourneyOut(BaseModel):
+    farm_id: int
+    planting_date: date | None = None
+    days_since_planting: int | None = None
+    items: list[JourneyItem] = Field(default_factory=list)
+    truncated: bool = False
+
+
+class CheckBrief(BaseModel):
+    analysis_id: int
+    at: datetime
+    crop: str
+    issue: str
+    severity: str = "unknown"
+    uncertainty_level: str = "unknown"
+    link: str | None = None
+
+
+class SideCompare(BaseModel):
+    previous: str
+    now: str
+    change: str  # up | down | same | unknown
+
+
+class ObsCompare(BaseModel):
+    still_present: list[str] = Field(default_factory=list)
+    new: list[str] = Field(default_factory=list)
+    not_mentioned_now: list[str] = Field(default_factory=list)
+
+
+class CompareOut(BaseModel):
+    issue: str  # same | different | unclear
+    severity: SideCompare
+    uncertainty: SideCompare
+    observations: ObsCompare
+    model_change: str | None = None
+    direction: str  # improving | worsening | stable | mixed | unclear
+
+
+class ComparisonOut(BaseModel):
+    previous: CheckBrief
+    now: CheckBrief
+    compare: CompareOut
+
+
+# ---- Farm Patterns (counts of real stored checks; no scores, no forecasts)
+class PatternFact(BaseModel):
+    kind: str
+    count: int
+    of: int
+
+
+class PatternOut(BaseModel):
+    issue: str
+    count: int
+    window: int
+    label: str  # strong | possible | limited
+    recurring: bool = False
+    environment: list[PatternFact] = Field(default_factory=list)
+    diary: list[PatternFact] = Field(default_factory=list)
+
+
+class PatternsOut(BaseModel):
+    farm_id: int
+    enough: bool
+    total: int
+    patterns: list[PatternOut] = Field(default_factory=list)

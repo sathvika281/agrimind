@@ -6,6 +6,7 @@ import { friendlyDate, photoTip, weatherRows } from "../copy";
 import { DecisionPanel } from "../insights/DecisionPanel";
 import { useLang } from "../LanguageContext";
 import { ListenButton } from "../voice/components";
+import { BeforeNow, Hypotheses } from "./InvestigationExtras";
 import { HowChecked, LinkBlock, QuickQuestions, SourcesBlock, useParentCheck, VerdictCard } from "./ResultExtras";
 
 function Bullets({ items, ordered = false }: { items: string[]; ordered?: boolean }) {
@@ -232,6 +233,8 @@ export default function Result() {
 
         <SourcesBlock r={a.result} />
         <HowChecked r={a.result} />
+        <Hypotheses r={a.result} lang={originalLang} />
+        <BeforeNow a={a} />
 
         {hasMore && (
           <details className="card">

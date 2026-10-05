@@ -158,26 +158,73 @@ export function LinkBlock({ a, r, parent }: { a: Analysis; r: AnalysisResult; pa
 }
 
 
-/** Which steps of the investigation actually ran (names and outcomes only; nothing the model reasoned). */
+/** The Investigation Dossier: which steps really ran, what was considered, why, what is unknown, what would verify it.
+ *  Built from the agents' real outputs; shown only when the agentic investigation produced it. No reasoning text. */
 export function HowChecked({ r }: { r: AnalysisResult }) {
   const { t } = useLang();
   const G = t.ag;
+  const Z = t.dz;
   const steps = (r.agent_steps ?? []).filter((s) => G.agents[s.agent]);
   if (steps.length === 0) return null;
+  const d = r.dossier;
+  const h3 = "mt-4 text-base font-bold text-leaf-800";
   return (
     <details className="card" data-testid="how-checked">
-      <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{G.checkedTitle}</summary>
-      <ul className="mt-3 space-y-1 text-base">
+      <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{Z.title}</summary>
+      <h3 className={h3}>{Z.agentsTitle}</h3>
+      <ul className="mt-1 space-y-1 text-base">
         {steps.map((s, i) => {
           const note = s.note ? G.notes[s.note] : "";
+          const label = s.status === "skipped" ? `${Z.skipped}${note ? ` · ${note}` : ""}` : `${G.status[s.status] ?? s.status}${note ? ` · ${note}` : ""}`;
           return (
             <li key={i} data-agent={s.agent} data-status={s.status}>
+              <span aria-hidden>{s.status === "skipped" ? "○ " : "✓ "}</span>
               <span className="font-semibold">{G.agents[s.agent]}</span>
-              <span className="text-mute"> · {G.status[s.status] ?? s.status}{note ? ` · ${note}` : ""}</span>
+              <span className="text-mute"> · {label}</span>
             </li>
           );
         })}
       </ul>
+      {d && (
+        <div data-testid="dossier">
+          {d.evidence.length > 0 && (
+            <>
+              <h3 className={h3}>{Z.evidenceTitle}</h3>
+              <ul className="mt-1 space-y-1 text-base" data-testid="dossier-evidence">
+                {d.evidence.map((f) => {
+                  const fn = Z.ev[f.kind];
+                  return fn ? <li key={f.kind} data-used={String(!!f.used)}><span aria-hidden>{f.used ? "✓ " : "○ "}</span>{fn(f.count ?? 0, !!f.used)}</li> : null;
+                })}
+              </ul>
+            </>
+          )}
+          {d.why.length > 0 && (
+            <>
+              <h3 className={h3}>{Z.whyTitle}</h3>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-base" data-testid="dossier-why">
+                {d.why.map((f) => { const fn = Z.why[f.kind]; return fn ? <li key={f.kind}>{fn(f.count ?? 0)}</li> : null; })}
+              </ul>
+            </>
+          )}
+          {(d.unknown.length > 0 || (r.unknowns ?? []).length > 0) && (
+            <>
+              <h3 className={h3}>{Z.unknownTitle}</h3>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-base" data-testid="dossier-unknown">
+                {d.unknown.map((f) => (Z.unknown[f.kind] ? <li key={f.kind}>{Z.unknown[f.kind]}</li> : null))}
+                {(r.unknowns ?? []).slice(0, 3).map((u, i) => <li key={`u${i}`}>{u}</li>)}
+              </ul>
+            </>
+          )}
+          {d.verify.length > 0 && (
+            <>
+              <h3 className={h3}>{Z.verifyTitle}</h3>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-base" data-testid="dossier-verify">
+                {d.verify.map((f) => (Z.verify[f.kind] ? <li key={f.kind}>{Z.verify[f.kind]}</li> : null))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
     </details>
   );
 }

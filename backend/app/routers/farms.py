@@ -8,12 +8,15 @@ from ..auth.dependencies import current_user
 from ..database import get_db
 from ..models import Analysis, Farm, FarmEvent, User
 from .. import ratelimit
-from ..schemas import DecisionOut, EventCreate, EventOut, FarmCreate, FarmOut, FarmUpdate, FarmWeatherOut, InsightsOut, ProactiveOut, WeatherOut
+from ..schemas import WeatherTipsOut, PatternsOut, JourneyOut, DecisionOut, EventCreate, EventOut, FarmCreate, FarmOut, FarmUpdate, FarmWeatherOut, InsightsOut, ProactiveOut, WeatherOut
 from ..services import decision_support as decision_service
 from ..services import insights as insights_service
+from ..services import journey as journey_service
+from ..services import patterns as patterns_service
 from ..services import proactive_intelligence as proactive_service
 from ..services import weather as weather_service
 from ..services import weather_risk
+from ..services import weather_tips
 
 router = APIRouter(prefix="/farms", tags=["farms"])
 
@@ -76,12 +79,24 @@ def get_farm_weather(farm_id: int, user: User = Depends(current_user), db: Sessi
     if weather can't be fetched the answer is {weather: null, note: why}."""
     ratelimit.check_weather(user.id)
     farm = get_owned_farm(db, user, farm_id)
-    wx, note = weather_service.try_weather(farm.location)
+    # The weather page is not on the analysis path, so it may wait longer than a check does (slow cloud networks).
+    wx, note = weather_service.try_weather(farm.location, budget=weather_service.ROUTE_BUDGET_S)
     return FarmWeatherOut(
         weather=WeatherOut.model_validate(wx.to_dict()) if wx else None,
         note=None if wx else note,
         risks=weather_risk.weather_risks(wx.to_dict()) if wx else [],
     )
+
+
+@router.get("/{farm_id}/weather/tips", response_model=WeatherTipsOut)
+def get_farm_weather_tips(farm_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """How to cope with the weather forecast for THIS farm: non-chemical tips plus the real measured conditions that
+    triggered them. A separate endpoint on purpose: the plain weather answer stays free of advice text. Deterministic,
+    no model call; the weather itself is the cached one. Empty when weather is unavailable. Same 404/limit as weather."""
+    ratelimit.check_weather(user.id)
+    farm = get_owned_farm(db, user, farm_id)
+    wx, _note = weather_service.try_weather(farm.location, budget=weather_service.ROUTE_BUDGET_S)
+    return WeatherTipsOut(**weather_tips.tips_for(wx.to_dict() if wx else None))
 
 
 INSIGHTS_LIMIT = 100  # newest checks considered; one column-only query, no joins
@@ -214,3 +229,50 @@ def delete_farm_event(farm_id: int, event_id: int, user: User = Depends(current_
         raise HTTPException(404, "Diary entry not found.")
     db.delete(ev)
     db.commit()
+
+
+JOURNEY_CHECKS = 200
+
+
+@router.get("/{farm_id}/journey", response_model=JourneyOut)
+def get_farm_journey(farm_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """THIS farm's stored checks and the farmer's own diary, in time order, with the planting date if recorded.
+    Read-only, deterministic, no model call. Same 404 for foreign or missing farms."""
+    farm = get_owned_farm(db, user, farm_id)
+    found = db.execute(
+        select(Analysis.id, Analysis.crop, Analysis.created_at, Analysis.result_json, Analysis.parent_id, Analysis.link_kind)
+        .where(Analysis.user_id == user.id, Analysis.farm_id == farm.id)
+        .order_by(Analysis.id.desc())
+        .limit(JOURNEY_CHECKS)
+    ).all()
+    checks = [r._asdict() for r in _without_refined_parents(found)]
+    events = [
+        {"id": e.id, "kind": e.kind, "event_date": e.event_date}
+        for e in db.scalars(
+            select(FarmEvent).where(FarmEvent.user_id == user.id, FarmEvent.farm_id == farm.id).order_by(FarmEvent.event_date.desc(), FarmEvent.id.desc()).limit(EVENTS_LIMIT)
+        )
+    ]
+    return JourneyOut(farm_id=farm.id, **journey_service.build_journey(checks, events, farm.planting_date, datetime.now(timezone.utc).date()))
+
+
+@router.get("/{farm_id}/patterns", response_model=PatternsOut)
+def get_farm_patterns(farm_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Recurring relationships in THIS farm's own stored history (repeated observations, the weather stored with those
+    checks, diary entries shortly before them). Read-only, deterministic, no model call, no prediction. Same 404 for
+    foreign or missing farms."""
+    farm = get_owned_farm(db, user, farm_id)
+    found = db.execute(
+        select(Analysis.id, Analysis.crop, Analysis.created_at, Analysis.result_json, Analysis.weather_json, Analysis.parent_id, Analysis.link_kind)
+        .where(Analysis.user_id == user.id, Analysis.farm_id == farm.id)
+        .order_by(Analysis.id.desc())
+        .limit(INSIGHTS_LIMIT)
+    ).all()
+    rows = []
+    for r in _without_refined_parents(found):
+        res = r.result_json or {}
+        rows.append({"id": r.id, "crop": r.crop, "created_at": r.created_at, "likely_issue": res.get("likely_issue", ""), "severity": res.get("severity"), "weather": r.weather_json})
+    events = [
+        {"kind": e.kind, "event_date": e.event_date}
+        for e in db.scalars(select(FarmEvent).where(FarmEvent.user_id == user.id, FarmEvent.farm_id == farm.id).order_by(FarmEvent.event_date.desc()).limit(EVENTS_LIMIT))
+    ]
+    return PatternsOut(farm_id=farm.id, **patterns_service.build_patterns(rows, events))

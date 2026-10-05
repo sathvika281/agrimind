@@ -47,6 +47,7 @@ class MemoryAnalysis(BaseModel):
     contradicting_history: list[str] = Field(default_factory=list)
     recent_activities: list[str] = Field(default_factory=list)  # diary kinds only
     history_confidence: float = 0.0
+    matches_by_candidate: dict[str, int] = Field(default_factory=dict)  # candidate issue -> earlier checks of it
 
 
 class EnvironmentAnalysis(BaseModel):
@@ -55,6 +56,7 @@ class EnvironmentAnalysis(BaseModel):
     supporting_signals: list[str] = Field(default_factory=list)
     contradicting_signals: list[str] = Field(default_factory=list)
     environmental_uncertainties: list[str] = Field(default_factory=list)
+    signals_by_candidate: dict[str, dict[str, list[str]]] = Field(default_factory=dict)  # candidate -> {supports, contradicts} weather kinds
 
 
 class KnowledgeItem(BaseModel):

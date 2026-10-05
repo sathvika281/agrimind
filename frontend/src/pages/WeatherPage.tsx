@@ -31,7 +31,7 @@ export default function WeatherPage() {
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2" data-testid="weather-page">
           {farms.map((f) => (
-            <WeatherCard key={f.id} farm={f} weather={weatherByFarm[f.id]} heading={f.location.trim() ? `${f.location.trim()} · ${f.name}` : f.name} anchor={false} />
+            <WeatherCard key={f.id} farm={f} weather={weatherByFarm[f.id]} heading={f.location.trim() ? `${f.location.trim()} · ${f.name}` : f.name} anchor={false} showTips />
           ))}
         </div>
       )}

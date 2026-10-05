@@ -11,6 +11,8 @@ import { ProactiveSection } from "../insights/ProactiveSection";
 import { proactiveAnswer } from "../insights/proactive";
 import { useProactive } from "../insights/useProactive";
 import { useInsights } from "../insights/useInsights";
+import { CropJourney } from "../insights/CropJourney";
+import { FarmPatterns } from "../insights/FarmPatterns";
 import { useEvents } from "./Diary";
 import type { Decision, Proactive } from "../api";
 import { useLang } from "../LanguageContext";
@@ -300,6 +302,8 @@ export default function Insights() {
       {data && (
         <>
           <ProactiveSection data={proactive.data} loading={proactive.loading} error={proactive.error} retry={proactive.retry} farmName={selected.name} />
+          <CropJourney farmId={selected.id} version={version} />
+          <FarmPatterns farmId={selected.id} version={version} />
           <ProfileStrip farm={selected} d={data} />
           <Summary d={data} />
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">

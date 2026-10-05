@@ -37,6 +37,19 @@ def run(w: WeatherContext | None, analysis: CropAnalysis, planting_date: str | N
             elif moist:
                 out.contradicting_signals.append(f"{kind}: hot, dry weather makes some moisture-related explanations less likely")
     out.relevant_conditions = list(dict.fromkeys(out.relevant_conditions))
+    for cand in analysis.candidate_issues:
+        c_moist, c_stress = bool(_MOIST.search(cand)), bool(_STRESS.search(cand))
+        sup, con = [], []
+        for k in risks:
+            kind = k["kind"]
+            if kind in ("humid_wet", "heavy_rain") and c_moist:
+                sup.append(kind)
+            elif kind in ("hot_dry", "extreme_heat"):
+                if c_stress:
+                    sup.append(kind)
+                elif c_moist:
+                    con.append(kind)
+        out.signals_by_candidate[cand] = {"supports": sup, "contradicts": con}
 
     if risks and (moist or stress):
         out.weather_relevance = "high" if (out.supporting_signals or out.contradicting_signals) else "medium"

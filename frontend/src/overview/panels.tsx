@@ -9,6 +9,7 @@ import { useLang } from "../LanguageContext";
 import { levelOf, rainOutlook } from "./derive";
 import { LEVEL_SWATCH } from "./FarmMap";
 import { useStatus, type FarmWeather } from "./StatusContext";
+import { WeatherTips } from "./WeatherTips";
 
 function PanelHead({ title, right }: { title: string; right?: ReactNode }) {
   return (
@@ -164,7 +165,7 @@ function riskText(W: Dict["wr"], k: WeatherRisk): string {
   return W.extreme_heat(n(k.temp_max_c));
 }
 
-export function WeatherCard({ farm, weather, heading, anchor = true }: { farm: Farm; weather?: FarmWeather; heading?: string; anchor?: boolean }) {
+export function WeatherCard({ farm, weather, heading, anchor = true, showTips = false }: { farm: Farm; weather?: FarmWeather; heading?: string; anchor?: boolean; showTips?: boolean }) {
   const { t } = useLang();
   const O = t.ov;
   const w: Weather | null | undefined = weather?.weather;
@@ -180,13 +181,14 @@ export function WeatherCard({ farm, weather, heading, anchor = true }: { farm: F
           <div className="grid grid-cols-2 gap-2">
             <Metric icon={<IconWeather />} label={O.now} value={fmt(w.temperature_c, "°C")} sub={`${O.humidity} ${fmt(w.humidity_pct, "%")} · ${O.wind} ${fmt(w.wind_kmh, " km/h")}`} />
             <Metric icon={<IconWeather />} label={O.today} value={`${fmt(w.temp_min_c)}–${fmt(w.temp_max_c, "°C")}`} />
-            <Metric icon={<IconDrop />} label={O.past} value={O.rainMm(fmt(w.past_3d_rain_mm))} />
+            <Metric icon={<IconDrop />} label={O.past} value={w.past_3d_rain_mm == null ? t.wt.notAvailable : O.rainMm(fmt(w.past_3d_rain_mm))} />
             <Metric icon={<IconDrop />} label={O.next} value={O.rainMm(fmt(w.next_3d_rain_mm))} />
           </div>
           <p className="flex items-start gap-2 text-sm text-leaf-800">
             <IconDrop />
             <span>{out.kind === "rain" ? O.factRain(String(out.mm)) : out.kind === "dry" ? O.factDry : O.unavailable}</span>
           </p>
+          {showTips && <WeatherTips farmId={farm.id} version={String(weather?.at ?? "")} />}
           {weather?.risks && weather.risks.length > 0 && (
             <div className="rounded-md border border-amber-300 bg-amber-50 p-2.5 text-sm text-amber-900" data-testid="weather-risks">
               <p className="text-xs font-semibold">{t.wr.title}</p>

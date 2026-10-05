@@ -19,8 +19,9 @@ from ..config import settings
 from ..database import get_db
 from ..errors import AppError
 from ..models import Analysis, Farm, FarmEvent, User
-from ..schemas import AnalysisCreate, AnalysisOut, AnalysisResult, RefineRequest, TranslateRequest, WeatherOut
+from ..schemas import CheckBrief, ComparisonOut, AnalysisCreate, AnalysisOut, AnalysisResult, RefineRequest, TranslateRequest, WeatherOut
 from ..services import ai, images, storage, weather
+from ..services import journey as journey_service
 from .farms import MAX_ID, get_owned_farm
 
 log = logging.getLogger("agrimind.analyses")
@@ -366,6 +367,35 @@ def _owned(db: Session, user: User, analysis_id: int) -> Analysis:
 @router.get("/{analysis_id}", response_model=AnalysisOut)
 def get_analysis(analysis_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     return _out(_owned(db, user, analysis_id))
+
+
+def _brief(a: Analysis) -> CheckBrief:
+    res = a.result_json or {}
+    sev, unc = res.get("severity"), res.get("uncertainty_level")
+    return CheckBrief(
+        analysis_id=a.id, at=_utc(a.created_at), crop=a.crop, issue=str(res.get("likely_issue", "")),
+        severity=sev if sev in ("low", "medium", "high") else "unknown", uncertainty_level=unc if unc in ("low", "some", "high") else "unknown", link=a.link_kind,
+    )
+
+
+@router.get("/{analysis_id}/comparison", response_model=ComparisonOut | None)
+def get_comparison(analysis_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """This check against the farmer's previous relevant check (the follow-up's parent, else the newest earlier check
+    of the same crop on the same farm), or null. Read-only and deterministic. Same 404 for foreign/missing checks."""
+    a = _owned(db, user, analysis_id)
+    prev = None
+    if a.link_kind == "followup" and a.parent_id:
+        prev = db.scalars(select(Analysis).where(Analysis.id == a.parent_id, Analysis.user_id == user.id)).unique().first()
+    if prev is None:
+        ceiling = a.parent_id if (a.link_kind == "refine" and a.parent_id) else a.id  # a refinement is the same incident as its parent
+        prev = db.scalars(
+            select(Analysis).where(
+                Analysis.user_id == user.id, Analysis.farm_id == a.farm_id, func.lower(Analysis.crop) == a.crop.strip().lower(), Analysis.id < ceiling
+            ).order_by(Analysis.id.desc()).limit(1)
+        ).unique().first()
+    if prev is None:
+        return None
+    return ComparisonOut(previous=_brief(prev), now=_brief(a), compare=journey_service.compare(prev.result_json or {}, a.result_json or {}))
 
 
 def _context_from_stored(a: Analysis, language: str) -> ai.AnalysisContext:

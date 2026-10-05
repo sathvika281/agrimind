@@ -21,6 +21,7 @@ from ..ai.base import AIProvider, AIServiceError, AnalysisContext
 from ..ai.safety import SafetyError, verify
 from ..ai.service import GENERIC_FAILURE, SAFETY_FAILURE
 from ..rag.retrieval import Index
+from . import dossier
 from .state import AgentStep, AgriMindState, KnowledgeEvidence
 
 log = logging.getLogger("agrimind.agents")
@@ -186,7 +187,17 @@ def build(rt: Runtime):
         return {"final_result": res, "steps": _step(state, "investigation", "ok", f"clarification:{c.reason}")}
 
     def finalize_node(state: AgriMindState):
-        return {"final_result": _with_steps(state["final_result"], state["steps"])}
+        final = _with_steps(state["final_result"], state["steps"])
+        if state.get("crop_analysis") is not None and state.get("base_result") is not None:  # not for a clarification
+            try:
+                fc = rt.toolbox.farm_context()
+                final = final.model_copy(update={"dossier": dossier.build(
+                    base=state["base_result"], final=final, crop_analysis=state["crop_analysis"], memory=state.get("memory_analysis"),
+                    env=state.get("environmental_analysis"), knowledge=state.get("knowledge_evidence"), farm_context=fc,
+                    has_image=ctx.image is not None, has_weather=ctx.weather is not None)})
+            except Exception:  # noqa: BLE001  (the dossier is an explanation, never a reason to lose the answer)
+                log.exception("dossier build failed")
+        return {"final_result": final}
 
     g = StateGraph(AgriMindState)
     for name, fn in [("investigate", investigate), ("crop_analysis", crop_node), ("farm_memory", memory_node), ("environment", environment_node),

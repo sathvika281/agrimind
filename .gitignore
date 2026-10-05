@@ -11,3 +11,6 @@ backend/uploads/
 # Third-party page text is rebuilt with `python -m app.rag.ingest`; only the audited source list is committed.
 backend/knowledge/documents.jsonl
 backend/knowledge/documents.archive.jsonl
+
+# Local copy-paste file of production env values (contains secrets)
+render.env

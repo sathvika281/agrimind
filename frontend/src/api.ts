@@ -50,7 +50,57 @@ export interface AnalysisResult {
   // Agentic investigation (optional: only present when it ran)
   sources?: { title: string; institution: string; url: string; excerpt?: string }[];
   agent_steps?: { agent: string; status: "ok" | "skipped" | "failed" | "retry"; note?: string }[];
+  dossier?: Dossier | null;
 }
+export interface Fact { kind: string; count?: number | null; detail?: string; used?: boolean | null }
+export interface Hypothesis { label: string; rank: "better_supported" | "also_possible"; supporting: Fact[]; against_or_unknown: Fact[]; how_to_tell: string }
+
+export interface JourneyItem {
+  type: "check" | "diary";
+  at: string;
+  analysis_id?: number | null;
+  crop?: string;
+  issue?: string;
+  unclear?: boolean;
+  severity?: "low" | "medium" | "high" | "unknown";
+  uncertainty_level?: "low" | "some" | "high" | "unknown";
+  link?: "refine" | "followup" | null;
+  kind?: string | null;
+  event_id?: number | null;
+}
+export interface Journey { farm_id: number; planting_date: string | null; days_since_planting: number | null; items: JourneyItem[]; truncated: boolean }
+export interface CheckBrief { analysis_id: number; at: string; crop: string; issue: string; severity: "low" | "medium" | "high" | "unknown"; uncertainty_level: string; link?: string | null }
+export interface Comparison {
+  previous: CheckBrief;
+  now: CheckBrief;
+  compare: {
+    issue: "same" | "different" | "unclear";
+    severity: { previous: string; now: string; change: "up" | "down" | "same" | "unknown" };
+    uncertainty: { previous: string; now: string; change: "up" | "down" | "same" | "unknown" };
+    observations: { still_present: string[]; new: string[]; not_mentioned_now: string[] };
+    model_change: "better" | "same" | "worse" | "unclear" | null;
+    direction: "improving" | "worsening" | "stable" | "mixed" | "unclear";
+  };
+}
+export interface Patterns {
+  farm_id: number;
+  enough: boolean;
+  total: number;
+  patterns: {
+    issue: string;
+    count: number;
+    window: number;
+    label: "strong" | "possible" | "limited";
+    recurring: boolean;
+    environment: { kind: string; count: number; of: number }[];
+    diary: { kind: string; count: number; of: number }[];
+  }[];
+}
+export interface WeatherTips {
+  conditions: { kind: string; value: number }[];
+  tips: { kind: string; group: "protect" | "water" | "watch" }[];
+}
+export interface Dossier { evidence: Fact[]; why: Fact[]; unknown: Fact[]; verify: Fact[]; hypotheses: Hypothesis[] }
 export interface Weather {
   location_name: string;
   temperature_c: number | null;
@@ -302,6 +352,10 @@ export const api = {
   /** Delete the account and everything it owns. A wrong password is a 403 (not a 401, which would sign you out). */
   deleteAccount: (password: string) => request<void>("DELETE", "/auth/me", { password }, { quiet401: true }),
   farmEvents: (farmId: number) => request<FarmEvent[]>("GET", `/farms/${farmId}/events`),
+  farmJourney: (farmId: number) => request<Journey>("GET", `/farms/${farmId}/journey`),
+  farmWeatherTips: (farmId: number) => request<WeatherTips>("GET", `/farms/${farmId}/weather/tips`),
+  farmPatterns: (farmId: number) => request<Patterns>("GET", `/farms/${farmId}/patterns`),
+  analysisComparison: (id: number | string) => request<Comparison | null>("GET", `/analyses/${id}/comparison`),
   addFarmEvent: (farmId: number, e: { kind: EventKind; event_date?: string | null; note?: string | null }) => request<FarmEvent>("POST", `/farms/${farmId}/events`, e),
   deleteFarmEvent: (farmId: number, eventId: number) => request<void>("DELETE", `/farms/${farmId}/events/${eventId}`),
   /** Write this check again in another language (one cached model call on the server). */

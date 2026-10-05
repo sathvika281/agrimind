@@ -29,6 +29,7 @@ def run(tb: AgentToolbox, crop: str, analysis: CropAnalysis, base_change_status:
         elif issue and not is_unclear(issue):
             out.contradicting_history.append(f"{when}: a different issue was noted ({issue})")
     out.contradicting_history = out.contradicting_history[:3]
+    out.matches_by_candidate = {c: sum(1 for r in rows if _same_issue(r['likely_issue'], c)) for c in candidates}
     out.supporting_history = list(out.historical_matches[:3])
 
     for t in tb.farm_insights().get("trends", []):

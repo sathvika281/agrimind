@@ -22,3 +22,5 @@ services:
       - { key: UPLOADS_DIR, value: /data/uploads }
       - { key: JWT_SECRET, generateValue: true }   # 48+ chars needed; Render generates a long random value
       - { key: GEMINI_API_KEY, sync: false }       # you paste the NEW key in the Render dashboard, never in git
+      - { key: OPENWEATHER_API_KEY, sync: false }  # weather: paste in the Render dashboard, never in git (Open-Meteo is the automatic backup)
+      - { key: WEATHER_PROVIDER, value: auto }

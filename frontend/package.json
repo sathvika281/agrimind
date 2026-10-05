@@ -14,7 +14,9 @@
     "test:proactive": "node scripts/proactive.test.mjs",
     "test:round2": "node scripts/round2.test.mjs",
     "test:account": "node scripts/account.test.mjs",
-    "test:agentic": "node scripts/agentic.test.mjs"
+    "test:agentic": "node scripts/agentic.test.mjs",
+    "test:dossier": "node scripts/dossier.test.mjs",
+    "test:weathertips": "node scripts/weathertips.test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

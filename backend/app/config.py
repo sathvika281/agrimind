@@ -56,6 +56,16 @@ class Settings:
         raw = os.environ.get("KNOWLEDGE_DIR", "")
         return Path(raw) if raw else BACKEND_DIR / "knowledge"
 
+    # --- weather providers: OpenWeather (needs a key) first, Open-Meteo (no key) as the backup ---
+    @property
+    def openweather_api_key(self) -> str:
+        return os.environ.get("OPENWEATHER_API_KEY", "").strip()
+
+    @property
+    def weather_provider(self) -> str:
+        v = os.environ.get("WEATHER_PROVIDER", "auto").strip().lower()
+        return v if v in ("auto", "openweather", "openmeteo") else "auto"
+
     # --- uploads ---
     @property
     def max_image_bytes(self) -> int:

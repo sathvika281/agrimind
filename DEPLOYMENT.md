@@ -121,3 +121,12 @@ Edit `GEMINI_API_KEY` in `.env.production` on the server, then `docker compose u
 - **Paid disk required:** SQLite and photos live on the persistent disk mounted at `/data`; without a disk they are lost on every deploy.
 - The Docker image has not been built on the author's machine, so Render's first build is its first test.
 - Vercel can host only the website, not this backend (no persistent disk, SQLite and photos would be lost), so it is not used.
+
+## 13. Weather (OpenWeather + Open-Meteo backup)
+
+- **Key:** create a free account at openweathermap.org, copy the API key (a new key can take up to about 2 hours to start working) and set `OPENWEATHER_API_KEY` in Render's Environment tab. The key lives only there (and in your local git-ignored `.env`), never in git or the website. Without a key the app uses Open-Meteo only.
+- **Order:** `WEATHER_PROVIDER=auto` (default) tries OpenWeather first and falls back to Open-Meteo on any failure; `openweather` or `openmeteo` force one provider.
+- **Free plan limit:** OpenWeather's free plan has no rain history, so "rain in the last 3 days" shows "Not available" when OpenWeather answered. Everything else (temperature, humidity, wind, rain ahead) comes from it.
+- **Timeouts:** weather for an analysis keeps a short 4 s budget (it must never slow a check); the Weather page waits up to 10 s, which is what slow cloud networks need.
+- **Weather tab tips:** `GET /farms/{id}/weather/tips` returns coded, non-chemical coping tips and the real measured conditions behind them (thresholds: `services/weather_risk.py` plus wind >= 30 km/h and cold night <= 10 C in `services/weather_tips.py`). They are general rules of thumb: have an agronomist review them for your region.
+- **If weather still fails on Render:** the log line `weather request failed category=...` (or `weather provider failed ...`) says why. Share only that line, never the key.

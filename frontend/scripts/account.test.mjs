@@ -34,6 +34,7 @@ test("privacy never claims more than the app does (no legal guarantees, no selli
   assert.match(t, /does not sell/);
   assert.match(t, /not legal advice/);
   assert.match(t, /gemini/);
+  assert.match(t, /openweather/);
   assert.match(t, /open-meteo/);
   assert.match(t, /never sent/);
 });
