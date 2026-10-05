@@ -113,9 +113,11 @@ Edit `GEMINI_API_KEY` in `.env.production` on the server, then `docker compose u
 - **Knowledge base:** `backend/knowledge/sources.json` lists every source considered (included or excluded, with the reason) and `documents.jsonl` holds the text chunks. Refresh with `python -m app.rag.discover candidates.json` (validates and records candidate URLs) then `python -m app.rag.ingest`. Pages are fetched over verified HTTPS only; sentences about chemicals, doses or spraying are removed at ingestion. A page that changed upstream is flagged `update_available` and is not applied until you run `ingest --accept-updates` (the old chunks are archived).
 - **Limits:** retrieval is lexical (BM25), so wording matters; the current corpus is TNAU (Tamil Nadu) pages only (see the manifest for what could not be reached); sources are shown only when the model actually relied on a retrieved passage.
 
-## 12. GitHub + Vercel (website) + Render (backend)
+## 12. GitHub + Render (one service for website and backend)
 
 - The repo is public, so it holds **no secrets and no third-party page text**: `.env`, databases and uploads are git-ignored, and `backend/knowledge/documents.jsonl` is rebuilt on the server with `python -m app.rag.ingest` (the audited `sources.json` is committed). Without it the app simply says "no knowledge base".
-- **Backend:** create a Render Blueprint from `render.yaml`, then set `GEMINI_API_KEY` (a NEW key) in the Render dashboard. Keep `AGENTIC_ANALYSIS_ENABLED=false` for the first deploy. Check `https://<service>.onrender.com/health`.
-- **Website:** import the repo in Vercel with **Root Directory = `frontend`**, then edit `frontend/vercel.json` and replace `YOUR-BACKEND-SERVICE.onrender.com` with your real Render host. Vercel proxies `/api/*` to Render, so the browser only talks to one origin and the login cookie stays first-party.
-- Vercel can't run the backend (no persistent disk, SQLite and photos would be lost, serverless time limits).
+- **One service does everything.** The Docker image builds the website and serves it together with the API (`app/asgi_prod.py`), so a single Render service is enough: one URL, and the login cookie stays first-party. No Vercel needed.
+- **Deploy:** Render -> New -> Blueprint -> pick this repo (it reads `render.yaml`). Set `GEMINI_API_KEY` (a NEW key) in the Render dashboard. Keep `AGENTIC_ANALYSIS_ENABLED=false` for the first deploy. Check `https://<service>.onrender.com/health`.
+- **Paid disk required:** SQLite and photos live on the persistent disk mounted at `/data`; without a disk they are lost on every deploy.
+- The Docker image has not been built on the author's machine, so Render's first build is its first test.
+- Vercel can host only the website, not this backend (no persistent disk, SQLite and photos would be lost), so it is not used.
