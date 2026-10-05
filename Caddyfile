@@ -1,0 +1,5 @@
+# Caddy terminates HTTPS (automatic certificates for {$DOMAIN}) and forwards everything to the app container.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:8000
+}

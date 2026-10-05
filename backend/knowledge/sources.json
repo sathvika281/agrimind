@@ -1,0 +1,639 @@
+[
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/crop_prot_crop%20diseases_veg_tomato.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "tomato",
+    "topics": [
+      "tomato diseases",
+      "symptoms"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:15+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "be6054d5051e7a166764ef2ed25e62b97214c974f5a9db2f2ccdc8d4be61451e",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/tomato_diseases_2.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "tomato",
+    "topics": [
+      "early blight",
+      "leaf spot"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:16+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "5e467a6325e71a708146447bba7dbf96267962538e3b56809e59d49e010ee464",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/org_farm/orgfarm_tomato_diseases.html",
+    "title": "ORGANIC FARMING :: Home",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "tomato",
+    "topics": [
+      "tomato diseases",
+      "symptoms"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:19+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "701724ce5c56a152439d2cea54c22f50f207ce0f76175d511eed7ffb2e739adb",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Tomato.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "tomato",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:03:53+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/chilli/chilli_1.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "chilli",
+    "topics": [
+      "thrips",
+      "leaf curl"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:21+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "29e0141e2483dbbde6530d80fd15367a12d7f745af1a7e451dc1ba352670186f",
+    "update_available": false
+  },
+  {
+    "url": "https://www.agritech.tnau.ac.in/crop_protection/chilli/chilli_5.html",
+    "title": "",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "chilli",
+    "topics": [
+      "yellow mite",
+      "leaf curl"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:00:41+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/chilli_diseases_5.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "chilli",
+    "topics": [
+      "cercospora leaf spot"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:22+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "4d76e6a1d3f57766b8fee638538642152071fcda7f27774aecd2fa39f222fc08",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/chilli_phdiseases_2.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "chilli",
+    "topics": [
+      "post harvest diseases",
+      "fruit rot"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:23+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "efaf4e503b7515d66fbd4ae9f7b98cfafffc6c23573823aa3de46c468456e5f4",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/crop_prot_crop_insect-veg_chillies_pest&disease.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "chilli",
+    "topics": [
+      "pests",
+      "diseases"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:23+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "189b6cfe86ae2b259335038152ce6f95ef6eb33821b3179275ce34edceb67ab6",
+    "update_available": false
+  },
+  {
+    "url": "https://ccari.icar.gov.in/dss/chilli.html",
+    "title": "",
+    "institution": "ICAR - Central Coastal Agricultural Research Institute (CCARI), Goa",
+    "crop": "chilli",
+    "topics": [
+      "pests",
+      "diseases"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:07+00:00",
+    "included": false,
+    "reason": "rejected:dns_not_resolved",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Chilli.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "chilli",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:07+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/rice_diseases/rice_1.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "blast",
+      "leaf spot"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:25+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "8e2bbc3f6bb382dbebb5b63638dc84f8d1550ce35bc7bd61f2a3c8ab19b83a3f",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/rice_diseases/rice_23.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "bacterial leaf blight"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:26+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "d35afae88f5a3f8e07ba725e22f535d0f00261e0e0e48af9f30fbba7703ef67b",
+    "update_available": false
+  },
+  {
+    "url": "https://www.agritech.tnau.ac.in/expert_system/paddy/cpdisblast.html",
+    "title": "",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "blast"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:01:03+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://www.agritech.tnau.ac.in/expert_system/paddy/cpdisblb.html",
+    "title": "",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "bacterial leaf blight"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:01:14+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Rice.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "rice",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:19+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://www.agritech.tnau.ac.in/expert_system/paddy/nutrientmanagement.html",
+    "title": "",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "nutrient management",
+      "deficiency"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:01:35+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/maize_disease_new/maize_1.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "maize",
+    "topics": [
+      "downy mildew"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:28+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "d9886bb30cef742bdf5da50b5a1b08142ab42d78726396bf1b439741ac0833c7",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/maize_disease/maize_4.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "maize",
+    "topics": [
+      "turcicum leaf blight",
+      "leaf blight"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:28+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "7aeca5d462ec071dac8e35bc559f1504c3aebace666d6a9d70d9f626967e669d",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Maize.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "maize",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:31+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/crop_prot_crop_insectpest%20_cotton.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "cotton",
+    "topics": [
+      "pests",
+      "bollworm",
+      "whitefly"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:29+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "b29c17ae621cf07247199c68233706bea6ef690ad2829e6cf92510e77fce78df",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Cotton.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "cotton",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:41+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://cicr.org.in/wp-content/uploads/2026/04/TC_BL_11.pdf",
+    "title": "",
+    "institution": "ICAR - Central Institute for Cotton Research (CICR), Nagpur",
+    "crop": "cotton",
+    "topics": [
+      "integrated pest management",
+      "pests"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:52+00:00",
+    "included": false,
+    "reason": "rejected:http_403",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/groundnut_diseases/groundnut_d3.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "groundnut",
+    "topics": [
+      "rust"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:30+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "aa9477bb53ce44621a38e20ae7d9505bdba77be5d2a95ee1c3eb039354e6fd51",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/groundnut_diseases/groundnut_d5.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "groundnut",
+    "topics": [
+      "bud necrosis",
+      "virus"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:30+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "9e8cadd6448e9f299775be192910373b91781f2f0608d244a93a99e08e93ca6f",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/org_farm/orgfarm_prac_agri_groundnut_diseases.html",
+    "title": "ORGANIC FARMING :: Home",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "groundnut",
+    "topics": [
+      "leaf spot",
+      "tikka"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:31+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "fa5e3e66f47fe478a6d3d648fb22175dcb247ed6ba4f9832fb453a48bbef85ba",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Groundnut.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "groundnut",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:04:53+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/brinjal_diseases_2.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "brinjal",
+    "topics": [
+      "cercospora leaf spot"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:32+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "bb6f01a3c4f289dca07b40317e0f5d2742b7f79e7c299f412281ecb0f06aab56",
+    "update_available": false
+  },
+  {
+    "url": "https://niphm.gov.in/IPMPackages/Brinjal.pdf",
+    "title": "",
+    "institution": "National Institute of Plant Health Management (NIPHM), Department of Agriculture and Farmers Welfare, Government of India",
+    "crop": "brinjal",
+    "topics": [
+      "pest and disease identification",
+      "monitoring"
+    ],
+    "region": "India",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:05:05+00:00",
+    "included": false,
+    "reason": "rejected:tls_certificate_not_verifiable",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/agriculture/agri_min_nutri_def_symptoms.html",
+    "title": "Agriculture :: Mineral Nutrition :: Introduction",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "",
+    "topics": [
+      "nutrient deficiency",
+      "symptoms"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:33+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "db601610136b961acc0e1a5bde700b4c2ef0bde7e892a57d0e006dc7bd9c0d72",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/agriculture/pdf/Diagnosis%20of%20nutritional%20disorders.pdf",
+    "title": "Microsoft Word - Diagnosis of nutritional disorders.doc",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "",
+    "topics": [
+      "nutrient deficiency",
+      "diagnosis"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:35+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "11df4aa8e7f4ad997e7a891a85c981edf212b11367dea0d9e3692dcece3b5107",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/pdf/9.pdf",
+    "title": "https://agritech.tnau.ac.in/pdf/9.pdf",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "",
+    "topics": [
+      "horticultural crop diseases",
+      "symptoms"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:08:56+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "80e15871961c6d5cb6573a9731e5dc16beaad80c8e5016834891ec4c09659133",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/pdf/8.pdf",
+    "title": "https://agritech.tnau.ac.in/pdf/8.pdf",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "",
+    "topics": [
+      "agricultural crop diseases",
+      "symptoms"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:09:01+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "ba8be1d89bfc72c82bfdda72c2daf07821dbfb40f83ebfb96b37ce964250ef0c",
+    "update_available": false
+  },
+  {
+    "url": "https://pjtsau.edu.in/crop.html",
+    "title": "",
+    "institution": "Professor Jayashankar Telangana State Agricultural University (PJTSAU)",
+    "crop": "",
+    "topics": [
+      "crop information"
+    ],
+    "region": "Telangana",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:05:15+00:00",
+    "included": false,
+    "reason": "rejected:unreachable_ConnectTimeout",
+    "content_hash": "",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/crop_protection/chilli/chilli_5.html",
+    "title": "TNAU Agritech Portal :: Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "chilli",
+    "topics": [
+      "yellow mite",
+      "leaf curl"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:09:03+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "2431c79f344148cb101c5a03cb76679a3c1ecfc2d95200c91572b225ded05fa6",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/expert_system/paddy/cpdisblast.html",
+    "title": "Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "blast"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:09:05+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "10383a3d80b0af0cebf1a407970c3b1c9a82759ab20bea061fcbacb581c2e202",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/expert_system/paddy/cpdisblb.html",
+    "title": "Crop Protection",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "bacterial leaf blight"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:09:08+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "e76d7f223e84bca603a2b411b0ef77f3595f1bfa48f3c013a5c79b8eb3eacc30",
+    "update_available": false
+  },
+  {
+    "url": "https://agritech.tnau.ac.in/expert_system/paddy/nutrientmanagement.html",
+    "title": "Nutrient Management",
+    "institution": "Tamil Nadu Agricultural University (TNAU), Coimbatore",
+    "crop": "rice",
+    "topics": [
+      "nutrient management",
+      "deficiency"
+    ],
+    "region": "Tamil Nadu",
+    "published": null,
+    "retrieved_at": "2026-10-05T07:09:09+00:00",
+    "included": true,
+    "reason": "ingested",
+    "content_hash": "041225c3860863559bf0efc0546eb6ce8a9214f08a19a5e4d872c20e746002e8",
+    "update_available": false
+  }
+]

@@ -1,0 +1,3 @@
+# Pilot: keep search engines out until you decide to open AgriMind publicly.
+User-agent: *
+Disallow: /

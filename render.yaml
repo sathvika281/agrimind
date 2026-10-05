@@ -1,0 +1,24 @@
+# Render Blueprint: the API (and, in the same image, the website) as one Docker service with a persistent disk.
+# A persistent disk needs a paid Render plan; without it the SQLite database and photos are lost on every deploy.
+services:
+  - type: web
+    name: agrimind-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    disk:
+      name: agrimind-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - { key: PORT, value: "8000" }
+      - { key: APP_ENV, value: production }
+      - { key: COOKIE_SECURE, value: "true" }
+      - { key: AI_PROVIDER, value: gemini }
+      - { key: AGENTIC_ANALYSIS_ENABLED, value: "false" }
+      - { key: DATABASE_URL, value: "sqlite:////data/agrimind.db" }
+      - { key: UPLOADS_DIR, value: /data/uploads }
+      - { key: JWT_SECRET, generateValue: true }   # 48+ chars needed; Render generates a long random value
+      - { key: GEMINI_API_KEY, sync: false }       # you paste the NEW key in the Render dashboard, never in git

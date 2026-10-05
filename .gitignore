@@ -1,0 +1,13 @@
+.env
+*.db
+__pycache__/
+.venv/
+node_modules/
+dist/
+.pytest_cache/
+*.log
+backend/uploads/
+*.bak
+# Third-party page text is rebuilt with `python -m app.rag.ingest`; only the audited source list is committed.
+backend/knowledge/documents.jsonl
+backend/knowledge/documents.archive.jsonl

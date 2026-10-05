@@ -1,0 +1,13 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.db
+**/*.bak
+**/*.log
+**/.env
+frontend/dist
+backend/uploads
+backend/tests
+.git
+.github

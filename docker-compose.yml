@@ -1,0 +1,31 @@
+# Production-style stack: the app (API + website) behind Caddy, which gets HTTPS certificates automatically.
+# 1. cp .env.production.example .env.production   and fill it in
+# 2. set DOMAIN (e.g. in a .env file next to this one) to a name that points at this server
+# 3. docker compose up -d --build
+services:
+  app:
+    build: .
+    env_file: .env.production
+    volumes:
+      - agrimind-data:/data
+    restart: unless-stopped
+    expose:
+      - "8000"
+  caddy:
+    image: caddy:2
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN to your site name}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+volumes:
+  agrimind-data:
+  caddy-data:
+  caddy-config:
