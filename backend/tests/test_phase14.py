@@ -237,7 +237,7 @@ def test_migrate_backs_up_first_adds_only_new_things_and_changes_no_existing_val
     before = cli.snapshot(db)
     rep = cli.migrate_db(db, tmp_path / "bk")
     assert os.path.isfile(rep["backup"]) and cli.snapshot(Path(rep["backup"])) == before  # the backup IS the old database
-    assert "farms.primary_crop" in rep["added_columns"] and "analyses.parent_id" in rep["added_columns"] and rep["new_tables"] == ["farm_events"]
+    assert "farms.primary_crop" in rep["added_columns"] and "analyses.parent_id" in rep["added_columns"] and rep["new_tables"] == ["farm_economics", "farm_events", "farm_plans", "weather_alerts"]
     assert rep["rows"] == {"users": 2, "farms": 2, "analyses": 2} and rep["unchanged"] is True
     assert cli._same_on_old_columns(before, db) == []  # every old value byte-identical (incl. Telugu text)
     again = cli.migrate_db(db, tmp_path / "bk")

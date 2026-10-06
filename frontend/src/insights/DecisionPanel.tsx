@@ -16,18 +16,21 @@ interface CardProps {
   loading: boolean;
   error: string | null;
   retry: () => void;
+  fold?: boolean; // closed row that opens in place (Result page)
 }
 
 /** Presentational: the compact "What to consider next (rule-based)" panel. Reads ONLY the decision JSON. */
-export function DecisionCard({ data, loading, error, retry }: CardProps) {
+export function DecisionCard({ data, loading, error, retry, fold = false }: CardProps) {
   const { t } = useLang();
   const ds = t.ds;
   const fmt = (iso: string) => new Date(iso).toLocaleDateString(t.locale, { day: "numeric", month: "short" });
   const long = (iso: string) => new Date(iso).toLocaleDateString(t.locale, { day: "numeric", month: "short", year: "numeric" });
   const v = data ? decisionView(ds, t.prof, data, fmt, long) : null;
+  const Root = fold ? "details" : "section";
+  const Head = fold ? "summary" : "div";
   return (
-    <section className="panel" aria-label={ds.title} data-testid="decision-panel" data-state={data?.state ?? (error ? "error" : "loading")}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2">
+    <Root className={`panel ${fold ? "plan-row" : ""}`} aria-label={ds.title} data-testid="decision-panel" data-state={data?.state ?? (error ? "error" : "loading")}>
+      <Head className={`flex flex-wrap items-center justify-between gap-2 px-4 py-3 ${fold ? "min-h-[3rem] cursor-pointer list-none [&::-webkit-details-marker]:hidden" : "border-b border-line"}`}>
         <h2 className="text-sm font-bold">{ds.title}</h2>
         {data && (
           <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${TONE[data.state]}`} data-testid="decision-state">
@@ -35,8 +38,8 @@ export function DecisionCard({ data, loading, error, retry }: CardProps) {
             {ds.state[data.state]}
           </span>
         )}
-      </div>
-      <div className="space-y-2 p-3">
+      </Head>
+      <div className="space-y-2 p-4">
         {loading && <p role="status" aria-live="polite" className="text-sm text-mute">{t.loadingGeneric}</p>}
         {error && (
           <div role="alert" className="space-y-2 text-sm">
@@ -75,12 +78,12 @@ export function DecisionCard({ data, loading, error, retry }: CardProps) {
         )}
         <p className="border-t border-line pt-2 text-xs text-mute">{ds.note}</p>
       </div>
-    </section>
+    </Root>
   );
 }
 
 /** Self-fetching version for one specific check (the Result page): described AS OF that check. */
 export function DecisionPanel({ farmId, analysisId }: { farmId: number; analysisId: number }) {
   const { data, loading, error, retry } = useDecision(farmId, analysisId, "");
-  return <DecisionCard data={data} loading={loading} error={error} retry={retry} />;
+  return <DecisionCard data={data} loading={loading} error={error} retry={retry} fold />;
 }

@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { Farm, InsightEvidence, Insights as InsightsData, Sev } from "../api";
-import { ErrorBox, Spinner } from "../components";
+import { ErrorBox, FarmChips, Spinner } from "../components";
+import { FieldBackdrop } from "../plan/FieldBackdrop";
+import { LayerTag } from "../plan/LayerTag";
+import { PlanIcon } from "../plan/icons";
 import { useFarms } from "../FarmContext";
 import { answer, profileAnswer, PROFILE_QUESTIONS, QUESTIONS, trendObservation, type ProfileQuestionId, type QuestionId } from "../insights/answers";
 import { DecisionCard } from "../insights/DecisionPanel";
@@ -43,15 +46,29 @@ function Evidence({ items }: { items: InsightEvidence[] }) {
   );
 }
 
-function Panel({ title, tag, children }: { title: string; tag?: boolean; children: React.ReactNode }) {
+/** A block of the page. `fold` = a closed row that opens in place, so the page shows the answer, not every table. */
+function Panel({ title, tag, children, fold = false }: { title: string; tag?: boolean; children: React.ReactNode; fold?: boolean }) {
   const { t } = useLang();
+  const head = (
+    <>
+      <h2 className="text-sm font-bold">{title}</h2>
+      {tag && <span className="tag-mint">{t.ins.fromChecks}</span>}
+    </>
+  );
+  if (fold)
+    return (
+      <details className="panel plan-row" aria-label={title}>
+        <summary className="flex min-h-[3rem] cursor-pointer list-none items-center gap-2 px-4 py-0 [&::-webkit-details-marker]:hidden">
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{head}</span>
+          <span className="plan-chev text-mute"><PlanIcon name="chevron" size={20} /></span>
+        </summary>
+        <div className="space-y-3 px-4 pb-4">{children}</div>
+      </details>
+    );
   return (
     <section className="panel" aria-label={title}>
-      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
-        <h2 className="text-sm font-bold">{title}</h2>
-        {tag && <span className="tag-mint">{t.ins.fromChecks}</span>}
-      </div>
-      <div className="space-y-3 p-3">{children}</div>
+      <div className="flex items-center gap-2 border-b border-line px-4 py-3">{head}</div>
+      <div className="space-y-3 p-4">{children}</div>
     </section>
   );
 }
@@ -114,7 +131,7 @@ function Comparison({ d }: { d: InsightsData }) {
   if (!c) return null;
   const a = answer(I, d, "changed", fmt);
   return (
-    <Panel title={I.comparisonTitle} tag>
+    <Panel title={I.comparisonTitle} tag fold>
       {a.lines.map((l, i) => <p key={i} className="text-sm">{l}</p>)}
       <Evidence items={a.evidence} />
     </Panel>
@@ -154,7 +171,7 @@ function Severity({ d }: { d: InsightsData }) {
   const I = t.ins;
   if (d.total === 0) return null;
   return (
-    <Panel title={I.sevTitle} tag>
+    <Panel title={I.sevTitle} tag fold>
       <div className="flex h-3 overflow-hidden rounded bg-line" role="img" aria-label={SEV_ORDER.map((s) => `${I.sev[s]}: ${d.severity_counts[s]}`).join(", ")}>
         {SEV_ORDER.filter((s) => d.severity_counts[s] > 0).map((s) => (
           <div key={s} className={SEV_BAR[s]} style={{ width: `${(d.severity_counts[s] / d.total) * 100}%` }} />
@@ -178,7 +195,7 @@ function Recent({ d }: { d: InsightsData }) {
   const I = t.ins;
   const fmt = useDateFmt();
   return (
-    <Panel title={I.recentTitle} tag>
+    <Panel title={I.recentTitle} tag fold>
       {d.recent.length === 0 ? (
         <p className="text-sm text-mute">{I.recentNone}</p>
       ) : (
@@ -243,7 +260,7 @@ function Ask({ d, farm, decision, proactive }: { d: InsightsData; farm: Farm; de
       <p className="text-xs text-mute">{I.askNote}</p>
       <div className="flex flex-wrap gap-2" role="group" aria-label={I.askTitle}>
         {[...QUESTIONS, ...PROFILE_QUESTIONS, ...DECISION_QUESTIONS, "needs" as const].map((id) => (
-          <button key={id} type="button" aria-pressed={q === id} onClick={() => setQ(id)} className={`min-h-[2.75rem] rounded-md border px-3 text-left text-sm font-semibold ${q === id ? "border-leaf-800 bg-leaf-800 text-white" : "border-line bg-white text-ink hover:bg-leaf-50"}`}>
+          <button key={id} type="button" aria-pressed={q === id} onClick={() => setQ(id)} className={`min-h-[2.75rem] rounded-full border px-4 text-left text-sm font-semibold transition active:scale-95 ${q === id ? "border-[#c8f169] bg-leaf-800 text-[#c8f169]" : "border-line bg-white text-ink hover:bg-leaf-50"}`}>
             {I.q[id]}
           </button>
         ))}
@@ -273,6 +290,9 @@ export default function Insights() {
   const decision = useDecision(selected?.id ?? null, null, version);
   const diary = useEvents(selected?.id ?? null);
   const proactive = useProactive(selected?.id ?? null, version);
+  const [params, setParams] = useSearchParams();
+  const tab: "journey" | "patterns" = params.get("tab") === "patterns" ? "patterns" : "journey"; // LEARN has two areas; one is shown at a time
+  const pick = (k: "journey" | "patterns") => setParams(k === "journey" ? {} : { tab: k }, { replace: true });
 
   if (farmError) return <ErrorBox message={farmError} />;
   if (farmsLoading) return <Spinner />;
@@ -287,10 +307,13 @@ export default function Insights() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-3">
-      <div>
-        <Link to="/" className="link-btn text-sm">{I.back}</Link>
-        <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">{I.title}</h1>
-        <p className="text-sm text-mute">{I.sub} · {I.forFarm(selected.name)}</p>
+      <div className="page-banner !mb-0">
+        <FieldBackdrop photo="/img/insights.jpg" />
+        <span className="mb-1 self-start"><LayerTag k="learn" dark /></span>
+        <Link to="/" className="inline-flex min-h-[2.75rem] items-center self-start rounded-full bg-leaf-900 px-3 text-sm font-semibold text-white hover:bg-leaf-800">{I.back}</Link>
+        <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{I.title}</h1>
+        <p className="text-sm text-white/85">{I.sub} · {I.forFarm(selected.name)}</p>
+        <FarmChips />
       </div>
       {error && (
         <div>
@@ -302,41 +325,55 @@ export default function Insights() {
       {data && (
         <>
           <ProactiveSection data={proactive.data} loading={proactive.loading} error={proactive.error} retry={proactive.retry} farmName={selected.name} />
-          <CropJourney farmId={selected.id} version={version} />
-          <FarmPatterns farmId={selected.id} version={version} />
-          <ProfileStrip farm={selected} d={data} />
           <Summary d={data} />
-          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-w-0 space-y-3">
-              <DecisionCard data={decision.data} loading={decision.loading} error={decision.error} retry={decision.retry} />
-              <Trends d={data} />
+
+          <div role="tablist" aria-label={I.title} className="grid grid-cols-2 gap-1.5 rounded-full bg-leaf-900 p-1.5" data-testid="learn-tabs">
+            {([["journey", t.jn.title], ["patterns", t.fp.title]] as const).map(([k, label]) => (
+              <button key={k} type="button" role="tab" id={`tab-${k}`} aria-selected={tab === k} aria-controls={`panel-${k}`} onClick={() => pick(k)} data-testid={`tab-${k}`}
+                className={`min-h-[2.75rem] rounded-full px-3 text-sm font-extrabold transition ${tab === k ? "bg-[#c8f169] text-leaf-900" : "text-white/85 hover:bg-white/10"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === "journey" && (
+            <div role="tabpanel" id="panel-journey" aria-labelledby="tab-journey" className="space-y-3" data-testid="learn-journey">
+              <CropJourney farmId={selected.id} version={version} embedded />
+              <ProfileStrip farm={selected} d={data} />
               <Comparison d={data} />
-              <Ask d={data} farm={selected} decision={decision.data} proactive={proactive.data} />
+              <Recent d={data} />
               {diary.items && diary.items.length > 0 && (
                 <section className="panel" aria-label={t.dy.recent} data-testid="insights-diary">
-                  <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
-                    <div className="flex items-center gap-2"><h2 className="text-sm font-bold">{t.dy.recent}</h2><span className="tag-mint">{t.dy.insightsNote}</span></div>
+                  <div className="flex items-center justify-between gap-2 px-4 pb-1 pt-4">
+                    <div className="flex items-center gap-2"><h2 className="text-base font-extrabold">{t.dy.recent}</h2><span className="tag-mint">{t.dy.insightsNote}</span></div>
                     <Link to="/diary" className="link-btn flex min-h-[2.5rem] items-center text-sm">{t.dy.title}</Link>
                   </div>
                   <ul className="divide-y divide-line">
                     {diary.items.slice(0, 5).map((ev) => (
-                      <li key={ev.id} className="px-3 py-2 text-sm"><span className="font-semibold">{t.dy.kinds[ev.kind] ?? ev.kind}</span> <span className="micro">· {new Date(ev.event_date + "T00:00:00").toLocaleDateString(t.locale, { day: "numeric", month: "short", year: "numeric" })}</span>{ev.note && <span className="block break-words text-ink/80">{ev.note}</span>}</li>
+                      <li key={ev.id} className="px-4 py-2 text-sm"><span className="font-semibold">{t.dy.kinds[ev.kind] ?? ev.kind}</span> <span className="micro">· {new Date(ev.event_date + "T00:00:00").toLocaleDateString(t.locale, { day: "numeric", month: "short", year: "numeric" })}</span>{ev.note && <span className="block break-words text-ink/80">{ev.note}</span>}</li>
                     ))}
                   </ul>
                 </section>
               )}
-              <Panel title={I.unknownTitle}>
-                <ul className="list-disc space-y-1 pl-5 text-sm">
-                  {I.unknown.map((u) => <li key={u}>{u}</li>)}
-                </ul>
-              </Panel>
             </div>
-            <div className="min-w-0 space-y-3">
+          )}
+
+          {tab === "patterns" && (
+            <div role="tabpanel" id="panel-patterns" aria-labelledby="tab-patterns" className="space-y-3" data-testid="learn-patterns">
+              <FarmPatterns farmId={selected.id} version={version} embedded />
+              <Trends d={data} />
               {data.total > 0 && <Frequency d={data} />}
               <Severity d={data} />
-              <Recent d={data} />
             </div>
-          </div>
+          )}
+
+          <DecisionCard data={decision.data} loading={decision.loading} error={decision.error} retry={decision.retry} fold />
+          <Ask d={data} farm={selected} decision={decision.data} proactive={proactive.data} />
+          <Panel title={I.unknownTitle} fold>
+            <ul className="list-disc space-y-1 pl-5 text-sm">
+              {I.unknown.map((u) => <li key={u}>{u}</li>)}
+            </ul>
+          </Panel>
         </>
       )}
     </div>

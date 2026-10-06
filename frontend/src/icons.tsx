@@ -21,4 +21,6 @@ export const IconLeaf = ({ size = 18 }: { size?: number }) => (<Svg size={size}>
 export const IconDrop = () => (<Svg><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z" /></Svg>);
 export const IconMic = () => (<Svg><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></Svg>);
 export const IconProfile = () => (<Svg><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Svg>);
+export const IconPlan = () => (<Svg><path d="M4 6h16M4 12h10M4 18h7" /><path d="M17 15l2 2 3-4" /></Svg>);
+export const IconEconomics = () => (<Svg><path d="M6 4h12M6 9h12M9 4c4 0 6 2 6 5s-2 5-6 5h-1l8 6" /></Svg>);
 export const IconDiary = () => (<Svg><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h4" /></Svg>);

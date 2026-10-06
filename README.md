@@ -31,3 +31,10 @@ The per-phase build notes are in [docs/PHASES.md](docs/PHASES.md).
 
 ## Agentic investigation (optional)
 A LangGraph pipeline of specialist steps (planner, crop analysis, farm memory, environment, trusted-document retrieval, decision support, safety gate) is available behind `AGENTIC_ANALYSIS_ENABLED=false` (default off). See DEPLOYMENT.md section 11 and `python -m app.agentic_compare`.
+
+## Farm plan
+A separate page that turns the real forecast, the crop's latest check and the farmer's planned activities into a plan that updates itself when something important changes (versions are kept). See DEPLOYMENT.md section 14.
+
+## Crop economics (DECIDE)
+
+`/economics` shows production, cost, break-even, market quotes, net selling value and what-if scenarios for the selected farm, from the farmer's own numbers. It is decision support, not a promise of profit; no market feed or forecast is connected. See DEPLOYMENT.md section 15.

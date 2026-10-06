@@ -7,6 +7,7 @@ import { FarmMap, type Layer } from "./FarmMap";
 import { FarmProfileCard, FieldPanel, LatestAdvice, RecentChecks, SummaryCards, WeatherCard, YourFarms } from "./panels";
 import { MAX_FIELDS } from "./derive";
 import { useStatus } from "./StatusContext";
+import { FieldBackdrop } from "../plan/FieldBackdrop";
 import { ProactiveSection } from "../insights/ProactiveSection";
 import { useProactive } from "../insights/useProactive";
 
@@ -57,43 +58,40 @@ export default function Overview() {
   return (
     <div className="mx-auto max-w-[1280px] space-y-5">
       {/* greeting + the one primary action */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="plan-hero photo-light flex min-h-[11rem] flex-wrap items-end justify-between gap-3 p-5 sm:p-6">
+        <FieldBackdrop photo="/img/overview.jpg" />
         <div className="min-w-0">
-          <h1 className="text-3xl font-extrabold text-ink">{O.greeting[greetingKey()]}</h1>
-          <p className="mt-1 text-base text-mute">{O.stateLine(selected.name, summary.needsAttention)}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">{O.greeting[greetingKey()]}</h1>
+          <p className="mt-1 text-base text-white/85">{O.stateLine(selected.name, summary.needsAttention)}</p>
         </div>
-        <Link to="/analyze" className="btn-sm-dark w-auto px-6">📷 {t.dash.checkCrop}</Link>
+        <Link to="/analyze" className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-full bg-[#c8f169] px-6 text-base font-extrabold text-leaf-900 shadow-lg active:scale-95 sm:w-auto">📷 {t.dash.checkCrop}</Link>
       </div>
 
       <SummaryCards farms={farms} analyses={analyses} needsAttention={summary.needsAttention} />
 
       <ProactiveSection data={proactive.data} loading={proactive.loading} error={proactive.error} retry={proactive.retry} farmName={selected.name} />
 
-      {/* map + field panel */}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
-        <FarmMap
-          farms={farms}
-          latest={latest}
-          selectedId={selected.id}
-          onSelect={select}
-          layer={layer}
-          onLayer={setLayer}
-          weatherByFarm={weatherByFarm}
-        />
-        <div className="grid min-w-0 grid-rows-[auto_1fr] gap-4">
+      {/* two independent columns: every card is only as tall as its content (no stretched, empty cards) */}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2">
+        <div className="min-w-0 space-y-4">
+          <FarmMap
+            farms={farms}
+            latest={latest}
+            selectedId={selected.id}
+            onSelect={select}
+            layer={layer}
+            onLayer={setLayer}
+            weatherByFarm={weatherByFarm}
+          />
+          <LatestAdvice farm={selected} analysis={latestSel} />
+        </div>
+        <div className="min-w-0 space-y-4">
           <FieldPanel farm={selected} analysis={latestSel} weather={fw} />
           <WeatherCard farm={selected} weather={fw} />
+          <RecentChecks analyses={analyses} />
+          <FarmProfileCard farm={selected} />
+          <YourFarms farms={farms} latest={latest} analyses={analyses} selectedId={selected.id} onSelect={select} />
         </div>
-      </div>
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
-        <LatestAdvice farm={selected} analysis={latestSel} />
-        <RecentChecks analyses={analyses} />
-      </div>
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
-        <YourFarms farms={farms} latest={latest} analyses={analyses} selectedId={selected.id} onSelect={select} />
-        <FarmProfileCard farm={selected} />
       </div>
     </div>
   );

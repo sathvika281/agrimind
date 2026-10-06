@@ -100,6 +100,91 @@ export interface WeatherTips {
   conditions: { kind: string; value: number }[];
   tips: { kind: string; group: "protect" | "water" | "watch" }[];
 }
+
+export interface PlanCtx { when: string; rain?: number; temp?: number; activity: string; hot?: boolean; issue?: string }
+export interface PlanItem {
+  key: string;
+  kind: string;
+  section: "now" | "next" | "if";
+  status: string;
+  when: string | null;
+  reasons: string[];
+  params: Record<string, unknown>;
+  check_id: number | null;
+}
+export interface PlanDay { date: string; rain_mm: number | null; temp_min_c: number | null; temp_max_c: number | null; rain_probability_pct: number | null }
+export interface PlanChange { key: string; change: "added" | "removed" | "changed"; kind: string; reason: string; before: { status: string; when: string | null } | null; after: { status: string; when: string | null } | null }
+export interface PlanActivity { id?: string; kind: string; date: string; note: string }
+export interface PlanInputs { activities: PlanActivity[]; field_condition: string }
+// ---- Crop economics (all figures are calculated on the server; the browser only displays and lets the farmer pick a case)
+export interface Rng { low: number; high: number }
+export interface EconPrice { date: string; price: number }
+export interface EconMarketIn { id?: string; name: string; distance_km: number | null; transport_per_quintal: number | null; prices: EconPrice[] }
+export interface EconInputs {
+  area: number | null; area_unit: "acre" | "hectare"; yield_low: number | null; yield_high: number | null;
+  marketable_low_pct: number | null; marketable_high_pct: number | null; days_to_harvest_low: number | null; days_to_harvest_high: number | null;
+  harvest_start: string | null; harvest_end: string | null; costs: Record<string, number>; markets: (EconMarketIn & { id: string })[];
+}
+export interface EconMarket {
+  id: string; name: string; source: string; distance_km: number | null; transport_per_quintal: number | null; observations: number;
+  latest: { date: string; price: number; age_days: number } | null; range: Rng | null; trend: string; status: string; points?: EconPrice[];
+}
+export interface EconOption extends EconMarket { net_per_quintal: number | null; net_value: Rng | null; gross_value?: Rng | null; complete: boolean; reason: string; rank: number | null }
+export interface EconCell { marketable: Rng; revenue: Rng; cost: number; margin: Rng; breakeven: Rng | null }
+export interface Economics {
+  crop: string | null; unit: string; today: string; demo: boolean; providers: string[];
+  context: { crop_source: string | null; planting_date: string | null; planting_source: string | null; latest_check: { severity: string; recent: boolean } | null; used: { source: string; fields: string[]; count: number }[] };
+  window: { start: string | null; end: string | null; source: string };
+  production: { unit: string; area: number | null; missing: string[]; production: Rng | null; marketable: Rng | null; yield: Rng | null; marketable_pct: Rng | null };
+  costs: { items: { key: string; amount: number | null; included: boolean }[]; not_included: string[]; total: number | null; per_area: number | null; per_quintal: Rng | null; complete: boolean };
+  breakeven: Rng | null; markets: EconMarket[]; options: EconOption[];
+  outlook: (EconCell & { market_id: string; transport_included: boolean }) | null;
+  scenarios: { price: number[]; yield: number[]; cost: number[]; cells: Record<string, EconCell> } | null;
+  reading: {
+    outlook: string; confidence: { level: string; reasons: string[] }; drivers: { factor: string; swing: number }[]; missing: string[];
+    best_market: { id: string; name: string; reason: string; net_per_quintal: number | null; gap_per_quintal: number | null; compared: number } | null;
+    price_vs_breakeven: string | null; notes: string[]; limitations: string[];
+  };
+  steps: { node: string; status: string; note: string; ms?: number }[];
+  inputs: EconInputs; updated_at: string | null;
+}
+
+// ---- Smart farm weather alerts (evaluated on the server from the real forecast; shown inside the Weather page)
+export interface WeatherAlertItem {
+  id: number; type: string; severity: "info" | "watch" | "important" | "severe"; event_date: string; status: string; source: string | null;
+  values: Record<string, number>; first_seen_at: string; updated_at: string; resolved_at: string | null; forecast_fetched_at: string | null;
+  plan_impact: { has_plan: boolean; plan_version: number | null; plan_may_be_outdated: boolean; affected: { key: string; kind: string; activity: string | null; status: string | null; when: string | null }[] } | null;
+}
+export interface WeatherAlerts {
+  farm: { id: number; name: string; location: string; crop: string | null; irrigation: string | null; planting_date: string | null };
+  freshness: { state: "live" | "stale" | "unavailable" | "no_location"; source: string | null; fetched_at: string | null; age_minutes: number | null; last_known_at: string | null; note: string | null };
+  alerts: WeatherAlertItem[]; recent: WeatherAlertItem[]; steps: { node: string; status: string; note: string }[]; plan: { has_plan: boolean; version: number | null }; today: string;
+}
+
+export interface FarmPlan {
+  farm_id: number;
+  version: number;
+  created_at: string;
+  trigger: string;
+  inputs: PlanInputs;
+  plan: {
+    crop: string | null;
+    generated_for: string;
+    forecast_available: boolean;
+    days_since_planting: number | null;
+    horizon: string[];
+    concern: { level: "none" | "possible" | "unclear"; issue: string; severity: string; uncertainty: string; check_id: number | null; checked_on: string | null; farmer_reported: string | null };
+    items: PlanItem[];
+    sources: { title: string; institution: string; url: string }[];
+  };
+  changes: { reasons: string[]; items: PlanChange[]; unchanged: number };
+  forecast: PlanDay[];
+  changed: boolean;
+  forecast_source: "live" | "last_snapshot" | "none";
+  forecast_note: string | null;
+  versions: number;
+}
+export interface PlanVersion { version: number; created_at: string; trigger: string; changes: FarmPlan["changes"]; items: number }
 export interface Dossier { evidence: Fact[]; why: Fact[]; unknown: Fact[]; verify: Fact[]; hypotheses: Hypothesis[] }
 export interface Weather {
   location_name: string;
@@ -353,6 +438,13 @@ export const api = {
   deleteAccount: (password: string) => request<void>("DELETE", "/auth/me", { password }, { quiet401: true }),
   farmEvents: (farmId: number) => request<FarmEvent[]>("GET", `/farms/${farmId}/events`),
   farmJourney: (farmId: number) => request<Journey>("GET", `/farms/${farmId}/journey`),
+  planRefresh: (farmId: number) => request<FarmPlan>("POST", `/farms/${farmId}/plan/refresh`),
+  weatherAlerts: (farmId: number) => request<WeatherAlerts>("GET", `/farms/${farmId}/weather/alerts`),
+  dismissWeatherAlert: (farmId: number, id: number) => request<{ ok: boolean }>("POST", `/farms/${farmId}/weather/alerts/${id}/dismiss`),
+  economics: (farmId: number) => request<Economics>("GET", `/farms/${farmId}/economics`),
+  saveEconomics: (farmId: number, body: unknown) => request<Economics>("PUT", `/farms/${farmId}/economics/inputs`, body),
+  planInputs: (farmId: number, body: PlanInputs) => request<FarmPlan>("PUT", `/farms/${farmId}/plan/inputs`, body),
+  planHistory: (farmId: number) => request<PlanVersion[]>("GET", `/farms/${farmId}/plan/history`),
   farmWeatherTips: (farmId: number) => request<WeatherTips>("GET", `/farms/${farmId}/weather/tips`),
   farmPatterns: (farmId: number) => request<Patterns>("GET", `/farms/${farmId}/patterns`),
   analysisComparison: (id: number | string) => request<Comparison | null>("GET", `/analyses/${id}/comparison`),

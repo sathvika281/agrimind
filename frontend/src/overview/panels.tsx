@@ -13,8 +13,8 @@ import { WeatherTips } from "./WeatherTips";
 
 function PanelHead({ title, right }: { title: string; right?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-1.5">
-      <h2 className="text-sm font-bold text-ink">{title}</h2>
+    <div className="flex items-center justify-between gap-2 px-4 pb-1 pt-4">
+      <h2 className="text-base font-extrabold text-ink">{title}</h2>
       {right}
     </div>
   );
@@ -22,12 +22,12 @@ function PanelHead({ title, right }: { title: string; right?: ReactNode }) {
 
 const fmt = (n: number | null | undefined, unit = "") => (n == null ? "—" : `${Math.round(n * 10) / 10}${unit}`);
 
-function Metric({ label, value, sub, icon }: { label: string; value: ReactNode; sub?: string; icon?: ReactNode }) {
+function Metric({ label, value, sub, icon, dark = false }: { label: string; value: ReactNode; sub?: string; icon?: ReactNode; dark?: boolean }) {
   return (
-    <div className="rounded-md border border-line bg-ground px-2.5 py-1.5">
-      <div className="micro flex items-center gap-1">{icon}{label}</div>
-      <div className="text-base font-bold text-ink">{value}</div>
-      {sub && <div className="text-xs text-mute">{sub}</div>}
+    <div className={`rounded-2xl px-3 py-3 ${dark ? "bg-leaf-900 text-white" : "bg-leaf-50"}`}>
+      <div className={`micro flex items-center gap-1 ${dark ? "!text-white/80" : ""}`}>{icon}{label}</div>
+      <div className={`text-xl font-extrabold leading-tight ${dark ? "text-white" : "text-ink"}`}>{value}</div>
+      {sub && <div className={`text-xs ${dark ? "text-white/80" : "text-mute"}`}>{sub}</div>}
     </div>
   );
 }
@@ -143,7 +143,7 @@ export function LatestAdvice({ analysis }: { farm?: Farm; analysis?: Analysis })
             </div>
             {doNow.length > 0 && (
               <div lang={L}>
-                <ol className="list-decimal space-y-1 pl-5 text-sm" data-testid="advice-steps">{doNow.map((x, i) => <li key={i}>{x}</li>)}</ol>
+                <ol className="space-y-2" data-testid="advice-steps">{doNow.map((x, i) => <li key={i} className="flex items-start gap-3 rounded-2xl bg-leaf-50 px-3 py-2.5 text-sm font-medium"><span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#c8f169] text-xs font-extrabold text-leaf-900">{i + 1}</span><span className="min-w-0">{x}</span></li>)}</ol>
               </div>
             )}
             <div className="flex flex-wrap gap-2">
@@ -165,7 +165,7 @@ function riskText(W: Dict["wr"], k: WeatherRisk): string {
   return W.extreme_heat(n(k.temp_max_c));
 }
 
-export function WeatherCard({ farm, weather, heading, anchor = true, showTips = false }: { farm: Farm; weather?: FarmWeather; heading?: string; anchor?: boolean; showTips?: boolean }) {
+export function WeatherCard({ farm, weather, heading, anchor = true, showTips = false, alerts }: { farm: Farm; weather?: FarmWeather; heading?: string; anchor?: boolean; showTips?: boolean; alerts?: ReactNode }) {
   const { t } = useLang();
   const O = t.ov;
   const w: Weather | null | undefined = weather?.weather;
@@ -179,7 +179,7 @@ export function WeatherCard({ farm, weather, heading, anchor = true, showTips = 
       ) : (
         <div className="space-y-3 p-4">
           <div className="grid grid-cols-2 gap-2">
-            <Metric icon={<IconWeather />} label={O.now} value={fmt(w.temperature_c, "°C")} sub={`${O.humidity} ${fmt(w.humidity_pct, "%")} · ${O.wind} ${fmt(w.wind_kmh, " km/h")}`} />
+            <Metric dark icon={<IconWeather />} label={O.now} value={fmt(w.temperature_c, "°C")} sub={`${O.humidity} ${fmt(w.humidity_pct, "%")} · ${O.wind} ${fmt(w.wind_kmh, " km/h")}`} />
             <Metric icon={<IconWeather />} label={O.today} value={`${fmt(w.temp_min_c)}–${fmt(w.temp_max_c, "°C")}`} />
             <Metric icon={<IconDrop />} label={O.past} value={w.past_3d_rain_mm == null ? t.wt.notAvailable : O.rainMm(fmt(w.past_3d_rain_mm))} />
             <Metric icon={<IconDrop />} label={O.next} value={O.rainMm(fmt(w.next_3d_rain_mm))} />
@@ -188,6 +188,7 @@ export function WeatherCard({ farm, weather, heading, anchor = true, showTips = 
             <IconDrop />
             <span>{out.kind === "rain" ? O.factRain(String(out.mm)) : out.kind === "dry" ? O.factDry : O.unavailable}</span>
           </p>
+          {alerts}
           {showTips && <WeatherTips farmId={farm.id} version={String(weather?.at ?? "")} />}
           {weather?.risks && weather.risks.length > 0 && (
             <div className="rounded-md border border-amber-300 bg-amber-50 p-2.5 text-sm text-amber-900" data-testid="weather-risks">
@@ -221,9 +222,9 @@ export function FarmProfileCard({ farm }: { farm: Farm }) {
   ];
   return (
     <section className="panel" aria-label={P.title} data-testid="farm-profile-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-1 pt-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-bold">{P.title}</h2>
+          <h2 className="text-base font-extrabold">{P.title}</h2>
         </div>
       </div>
       <dl className="px-4 py-1">
@@ -243,7 +244,7 @@ export function SummaryCards({ farms, analyses, needsAttention }: { farms: Farm[
   const { t } = useLang();
   const O = t.ov;
   const Card = ({ label, value, id }: { label: string; value: ReactNode; id: string }) => (
-    <div className="min-w-0 rounded-md border border-line bg-white px-4 py-3" data-testid={id}>
+    <div className="min-w-0 rounded-3xl bg-white px-4 py-3 shadow-[0_10px_28px_-18px_rgba(13,45,33,0.35)]" data-testid={id}>
       <div className="micro truncate">{label}</div>
       <div className="truncate text-2xl font-extrabold leading-tight text-ink">{value}</div>
     </div>
@@ -264,8 +265,8 @@ export function RecentChecks({ analyses }: { analyses: Analysis[] }) {
   const rows = analyses.slice(0, 3);
   return (
     <section className="panel min-w-0" aria-label={O.recentTitle} data-testid="recent-checks">
-      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
-        <h2 className="text-sm font-bold">{O.recentTitle}</h2>
+      <div className="flex items-center justify-between gap-2 px-4 pb-1 pt-4">
+        <h2 className="text-base font-extrabold">{O.recentTitle}</h2>
       </div>
       {rows.length === 0 ? (
         <div className="grid gap-2 p-4 text-center">
@@ -304,8 +305,8 @@ export function YourFarms({ farms, latest, analyses, selectedId, onSelect }: { f
   for (const a of analyses) counts.set(a.farm_id, (counts.get(a.farm_id) ?? 0) + 1);
   return (
     <section className="panel min-w-0" aria-label={O.farmsTitle} data-testid="your-farms">
-      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
-        <h2 className="text-sm font-bold">{O.farmsTitle}</h2>
+      <div className="flex items-center justify-between gap-2 px-4 pb-1 pt-4">
+        <h2 className="text-base font-extrabold">{O.farmsTitle}</h2>
       </div>
       <ul className="max-h-[22rem] divide-y divide-line overflow-y-auto">
         {farms.map((f) => {

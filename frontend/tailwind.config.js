@@ -30,7 +30,7 @@ export default {
         mono: ["ui-monospace", "SFMono-Regular", "Consolas", '"Liberation Mono"', "monospace"],
       },
       fontSize: { micro: ["0.75rem", { lineHeight: "1rem" }] }, // 12px floor (keeps Telugu legible)
-      borderRadius: { panel: "8px" },
+      borderRadius: { panel: "1.5rem" },
     },
   },
   plugins: [],

@@ -12,7 +12,7 @@ from ..auth.dependencies import current_user
 from ..auth.security import create_token, hash_password, verify_password
 from ..config import settings
 from ..database import get_db
-from ..models import Analysis, Farm, FarmEvent, User
+from ..models import Analysis, Farm, FarmEconomics, FarmEvent, FarmPlan, User, WeatherAlert
 from ..schemas import EventOut, FarmOut, LoginRequest, RegisterRequest, UserOut
 from ..services import storage
 
@@ -88,6 +88,9 @@ def delete_me(body: DeleteAccountRequest, request: Request, response: Response, 
     refs = [r for (r,) in db.execute(select(Analysis.image_path).where(Analysis.user_id == user.id, Analysis.image_path.is_not(None)))]
     try:
         db.execute(delete(FarmEvent).where(FarmEvent.user_id == user.id))
+        db.execute(delete(FarmPlan).where(FarmPlan.user_id == user.id))
+        db.execute(delete(FarmEconomics).where(FarmEconomics.user_id == user.id))
+        db.execute(delete(WeatherAlert).where(WeatherAlert.user_id == user.id))
         db.execute(delete(Analysis).where(Analysis.user_id == user.id))
         db.execute(delete(Farm).where(Farm.user_id == user.id))
         db.execute(delete(User).where(User.id == user.id))
@@ -108,11 +111,18 @@ def export_me(user: User = Depends(current_user), db: Session = Depends(get_db))
     farms = db.scalars(select(Farm).where(Farm.user_id == user.id).order_by(Farm.id)).all()
     checks = db.scalars(select(Analysis).where(Analysis.user_id == user.id).order_by(Analysis.id)).unique().all()
     events = db.scalars(select(FarmEvent).where(FarmEvent.user_id == user.id).order_by(FarmEvent.id)).all()
+    plans = db.scalars(select(FarmPlan).where(FarmPlan.user_id == user.id).order_by(FarmPlan.farm_id, FarmPlan.version)).all()
+    econ = db.scalars(select(FarmEconomics).where(FarmEconomics.user_id == user.id).order_by(FarmEconomics.farm_id)).all()
+    alerts = db.scalars(select(WeatherAlert).where(WeatherAlert.user_id == user.id).order_by(WeatherAlert.farm_id, WeatherAlert.id)).all()
     payload = {
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "user": {"email": user.email, "created_at": UserOut.model_validate(user).created_at.isoformat()},
         "farms": [FarmOut.model_validate(f).model_dump(mode="json") for f in farms],
         "checks": [_out(a).model_dump(mode="json") for a in checks],
         "diary": [{**EventOut.model_validate(e).model_dump(mode="json"), "farm_id": e.farm_id} for e in events],
+        "farm_plans": [{"farm_id": p.farm_id, "version": p.version, "created_at": p.created_at.isoformat(), "trigger": p.trigger, "inputs": p.inputs_json, "plan": p.plan_json, "changes": p.changes_json} for p in plans],
+        "farm_economics": [{"farm_id": e.farm_id, "updated_at": e.updated_at.isoformat(), "inputs": e.inputs_json} for e in econ],
+        "weather_alerts": [{"farm_id": a.farm_id, "type": a.type, "severity": a.severity, "event_date": a.event_date.isoformat(), "status": a.status, "values": a.values_json, "source": a.source,
+                            "first_seen_at": a.first_seen_at.isoformat(), "updated_at": a.updated_at.isoformat()} for a in alerts],
     }
     return JSONResponse(payload, headers={"Content-Disposition": 'attachment; filename="agrimind-data.json"', "Cache-Control": "no-store"})

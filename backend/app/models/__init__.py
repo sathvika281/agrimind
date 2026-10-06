@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -87,4 +87,61 @@ class FarmEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
-__all__ = ["User", "Farm", "Analysis", "FarmEvent"]
+class FarmPlan(Base):
+    """One VERSION of a farm's adaptive plan. Versions are kept (newest MAX_VERSIONS per farm); a new one is written only
+    when something material changed. forecast_json is the real daily forecast the version was based on."""
+
+    __tablename__ = "farm_plans"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    farm_id: Mapped[int] = mapped_column(ForeignKey("farms.id"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    trigger: Mapped[str] = mapped_column(String(60), default="first_plan")
+    inputs_json: Mapped[dict] = mapped_column(JSON)
+    plan_json: Mapped[dict] = mapped_column(JSON)
+    changes_json: Mapped[dict] = mapped_column(JSON)
+    forecast_json: Mapped[list | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    check_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class FarmEconomics(Base):
+    """The farmer's economic ASSUMPTIONS for one farm (area, yield, costs, market quotes) and the last calculated result.
+    The farm profile itself is never copied here: crop, location and planting date are read through the shared farm context."""
+
+    __tablename__ = "farm_economics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    farm_id: Mapped[int] = mapped_column(ForeignKey("farms.id"), index=True, unique=True)
+    inputs_json: Mapped[dict] = mapped_column(JSON)
+    result_json: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class WeatherAlert(Base):
+    """One smart weather alert for one farm: identity = (farm, type, day). The lifecycle is active -> updated -> resolved (or dismissed by
+    the farmer). Only the alert's own facts are stored (the measured numbers, source and fetch time); the weather system itself is not copied."""
+
+    __tablename__ = "weather_alerts"
+    __table_args__ = (UniqueConstraint("farm_id", "fingerprint", name="uq_weather_alert_identity"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    farm_id: Mapped[int] = mapped_column(ForeignKey("farms.id"), index=True)
+    fingerprint: Mapped[str] = mapped_column(String(60))
+    type: Mapped[str] = mapped_column(String(30))
+    severity: Mapped[str] = mapped_column(String(12))
+    event_date: Mapped[date] = mapped_column(Date)
+    values_json: Mapped[dict] = mapped_column(JSON)
+    source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    forecast_fetched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(12), default="active")  # active | updated | resolved | dismissed
+    dismissed_severity: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+__all__ = ["User", "Farm", "Analysis", "FarmEvent", "FarmPlan", "FarmEconomics", "WeatherAlert"]

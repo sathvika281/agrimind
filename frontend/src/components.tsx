@@ -3,11 +3,13 @@ import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react
 import { useAuth } from "./AuthContext";
 import { SEVERITY_STYLE, friendlyDate } from "./copy";
 import { useFarms } from "./FarmContext";
-import { IconChecks, IconCopilot, IconDiary, IconFarms, IconInsights, IconLeaf, IconOverview, IconProfile, IconWeather } from "./icons";
+import { IconChecks, IconCopilot, IconDiary, IconEconomics, IconFarms, IconInsights, IconLeaf, IconOverview, IconPlan, IconProfile, IconWeather } from "./icons";
 import { LANGS, type Lang } from "./i18n";
 import { useLang } from "./LanguageContext";
 import { rainOutlook } from "./overview/derive";
 import { useStatus } from "./overview/StatusContext";
+import { FieldBackdrop } from "./plan/FieldBackdrop";
+import { photoFor } from "./plan/photos";
 
 export function Spinner({ label }: { label?: string }) {
   const { t } = useLang();
@@ -36,16 +38,42 @@ export function ErrorBox({ message, requestId }: { message: string | null; reque
   );
 }
 
+/** Which farm am I working on? Every farm-specific page shows the farms as chips; tapping one switches the whole app to that farm.
+ *  (Diary, profile, checks, plan, journey and patterns all follow the selected farm, so what you add always goes to the farm shown here.) */
+export function FarmChips() {
+  const { t } = useLang();
+  const { farms, selected, select } = useFarms();
+  if (!farms || farms.length === 0 || !selected) return null;
+  return (
+    <div role="group" aria-label={t.shell.farm} className="mt-2 flex flex-wrap items-center gap-1.5" data-testid="farm-chips">
+      <span className="text-xs font-bold uppercase tracking-widest text-white/85">{t.shell.farm}</span>
+      {farms.map((f) => (
+        <button key={f.id} type="button" aria-pressed={f.id === selected.id} onClick={() => select(f.id)} data-testid={`farm-chip-${f.id}`}
+          className={`min-h-[2.75rem] max-w-[14rem] truncate rounded-full px-4 text-sm font-bold transition active:scale-95 ${f.id === selected.id ? "bg-[#c8f169] text-leaf-900" : "bg-leaf-900 text-white hover:bg-leaf-800"}`}>
+          {f.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const FARM_SCOPED = ["/diary", "/profile", "/analyze"];
+
 export function Page({ title, back, children }: { title: string; back?: string; children: ReactNode }) {
   const { t } = useLang();
+  const { pathname } = useLocation();
   return (
     <div>
-      {back && (
-        <Link to={back} className="link-btn mb-1">
-          {t.addFarm.back}
-        </Link>
-      )}
-      <h1 className="mb-5 text-3xl font-bold text-leaf-800">{title}</h1>
+      <div className="page-banner" data-testid="page-banner">
+        <FieldBackdrop photo={photoFor(pathname)} />
+        {back && (
+          <Link to={back} className="mb-1 inline-flex min-h-[2.75rem] items-center gap-1 self-start rounded-full bg-leaf-900 px-3 text-sm font-semibold text-white hover:bg-leaf-800">
+            {t.addFarm.back}
+          </Link>
+        )}
+        <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{title}</h1>
+        {FARM_SCOPED.includes(pathname) && <FarmChips />}
+      </div>
       {children}
     </div>
   );
@@ -77,7 +105,7 @@ export function SeverityBadge({ severity }: { severity?: string }) {
 function LanguageSwitcher() {
   const { lang, t, setLang } = useLang();
   return (
-    <div role="group" aria-label={t.lang.label} className="inline-flex overflow-hidden rounded-md border border-leaf-800">
+    <div role="group" aria-label={t.lang.label} className="inline-flex overflow-hidden rounded-full border border-leaf-800">
       {LANGS.map((l: Lang) => (
         <button
           key={l}
@@ -161,12 +189,12 @@ function StatusChips() {
 }
 
 const sideLight = ({ isActive }: { isActive: boolean }) =>
-  `flex min-h-[2.75rem] shrink-0 items-center gap-2 rounded-md px-3 text-sm font-semibold whitespace-nowrap ${
-    isActive ? "bg-leaf-800 text-white" : "text-ink hover:bg-leaf-100"
+  `flex min-h-[3.25rem] min-w-[4.5rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 text-xs font-semibold whitespace-nowrap ${
+    isActive ? "bg-[#c8f169] text-leaf-900" : "text-white/85 hover:bg-white/10"
   }`;
 const sideDark = ({ isActive }: { isActive: boolean }) =>
-  `flex min-h-[2.75rem] min-w-0 items-center gap-3 rounded-md px-3 text-[15px] font-semibold whitespace-nowrap ${
-    isActive ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
+  `flex min-h-[2.75rem] min-w-0 items-center gap-3 rounded-full px-4 text-[15px] font-semibold whitespace-nowrap ${
+    isActive ? "bg-[#c8f169] text-leaf-900" : "text-white/80 hover:bg-white/10 hover:text-white"
   }`;
 
 /** The section links: a vertical list in the dark sidebar (md+) or a horizontally scrolling tab bar on phones. */
@@ -174,19 +202,25 @@ function NavItems({ vertical }: { vertical: boolean }) {
   const { t } = useLang();
   const side = vertical ? sideDark : sideLight;
   const label = (text: string) => <span className="min-w-0 truncate">{text}</span>;
+  const group = (text: string) => (vertical ? <div className="micro mt-2 px-4 pt-1 font-bold uppercase tracking-widest !text-white/55" aria-hidden="true">{text}</div> : null);
   return (
     <nav
       aria-label={t.nav.label}
-      className={vertical ? "flex min-h-0 flex-col gap-1 overflow-x-hidden" : "flex gap-1 overflow-x-auto border-b border-line bg-white px-2 py-1"}
+      className={vertical ? "flex min-h-0 flex-col gap-1 overflow-x-hidden" : "bottom-nav"}
     >
       <NavLink to="/" end className={side}><IconOverview />{label(t.nav.home)}</NavLink>
       <NavLink to="/farms" className={side}><IconFarms />{label(t.nav.farms)}</NavLink>
       <NavLink to="/analyze" className={side}><IconCopilot />{label(t.nav.check)}</NavLink>
       <NavLink to="/history" className={side}><IconChecks />{label(t.nav.checks)}</NavLink>
       <NavLink to="/weather" className={side}><IconWeather />{label(t.shell.nav.weather)}</NavLink>
-      <NavLink to="/insights" className={side}><IconInsights />{label(t.shell.nav.insights)}</NavLink>
       <NavLink to="/diary" className={side}><IconDiary />{label(t.nav.diary)}</NavLink>
       <NavLink to="/profile" className={side}><IconProfile />{label(t.prof.editLink)}</NavLink>
+      {group(t.layer.learn)}
+      <NavLink to="/insights" className={side}><IconInsights />{label(t.nav.intel)}</NavLink>
+      {group(t.layer.act)}
+      <NavLink to="/plan" className={side}><IconPlan />{label(t.nav.plan)}</NavLink>
+      {group(t.layer.decide)}
+      <NavLink to="/economics" className={side}><IconEconomics />{label(t.nav.econ)}</NavLink>
     </nav>
   );
 }
@@ -240,16 +274,16 @@ export function Layout() {
       <div className="min-w-0 flex-1">
         {/* Phone header: brand + switcher + logout, then farm + chips, then the scrolling section tabs. */}
         <div className="md:hidden">
-          <header className="border-b border-line bg-white px-3 py-2">
+          <header className="rounded-b-3xl bg-leaf-900 px-3 py-2 text-white">
             <div className="flex items-center justify-between gap-2">
-              <Brand compact />
-              <button className="link-btn shrink-0 text-sm" onClick={doLogout}>{t.nav.logout}</button>
+              <Brand compact dark />
+              <button className="shrink-0 rounded-full px-3 text-sm font-semibold text-white/85 underline min-h-[2.75rem]" onClick={doLogout}>{t.nav.logout}</button>
             </div>
             <div className="mt-2 flex items-center gap-2">
               <div className="min-w-0 flex-1"><FarmSelector id="farm-switch-m" /></div>
               <LanguageSwitcher />
             </div>
-            <div className="mt-2"><StatusChips /></div>
+            <div className="mt-2 overflow-x-auto"><div className="w-max"><StatusChips /></div></div>
           </header>
           <NavItems vertical={false} />
         </div>
@@ -267,7 +301,7 @@ export function Layout() {
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className={`min-w-0 px-3 py-3 pb-16 md:px-4 ${wide ? "" : "mx-auto max-w-3xl"}`}>
+        <main id="main" tabIndex={-1} className={`min-w-0 px-3 py-3 pb-28 md:px-4 md:pb-16 ${wide ? "" : "mx-auto max-w-3xl"}`}>
           <Outlet />
         </main>
       </div>

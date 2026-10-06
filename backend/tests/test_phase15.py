@@ -199,7 +199,7 @@ def _db_world(register):
     register("b@example.com")
     db = SessionLocal()
     ua, ub = db.query(User).filter_by(email="a@example.com").one(), db.query(User).filter_by(email="b@example.com").one()
-    fa = Farm(user_id=ua.id, name="A", location="Guntur", planting_date=date.today() - timedelta(days=40))
+    fa = Farm(user_id=ua.id, name="A", location="Guntur", planting_date=datetime.now(timezone.utc).date() - timedelta(days=40))
     fb = Farm(user_id=ub.id, name="B", location="Tenali")
     db.add_all([fa, fb])
     db.commit()

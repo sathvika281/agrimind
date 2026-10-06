@@ -95,7 +95,7 @@ export function FarmMap({ farms, latest, selectedId, onSelect, layer, onLayer, w
         ))}
       </div>
 
-      <div className="relative m-3 aspect-[16/10.5] overflow-hidden rounded-md border border-line bg-[#ece9df]">
+      <div className="relative m-3 aspect-[16/8] rounded-2xl overflow-hidden rounded-md border border-line bg-[#ece9df]">
         <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="absolute inset-0 h-full w-full" role="group" aria-label={O.mapTitle}>
           <defs>
             <radialGradient id="g-ok"><stop offset="0" stopColor="#58a876" /><stop offset="1" stopColor="#1f6a45" /></radialGradient>

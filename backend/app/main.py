@@ -15,7 +15,7 @@ from .logging_config import request_id_var, setup_logging
 from .middleware import BodyLimitMiddleware, RequestContextMiddleware
 from .models import Analysis
 from .production import validate_production
-from .routers import analyses, auth, farms, health
+from .routers import analyses, auth, economics, farms, health, planning, weather_alerts
 from .services import storage
 
 setup_logging()
@@ -57,7 +57,7 @@ app.add_middleware(
 )
 app.add_middleware(RequestContextMiddleware)
 
-for router in (auth.router, farms.router, analyses.router, health.router):
+for router in (auth.router, farms.router, analyses.router, planning.router, economics.router, weather_alerts.router, health.router):
     app.include_router(router)
 
 

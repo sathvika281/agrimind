@@ -5,34 +5,56 @@ import { ErrorBox, Page, SeverityBadge, Spinner } from "../components";
 import { friendlyDate, photoTip, weatherRows } from "../copy";
 import { DecisionPanel } from "../insights/DecisionPanel";
 import { useLang } from "../LanguageContext";
+import { PlanIcon } from "../plan/icons";
 import { ListenButton } from "../voice/components";
-import { BeforeNow, Hypotheses } from "./InvestigationExtras";
-import { HowChecked, LinkBlock, QuickQuestions, SourcesBlock, useParentCheck, VerdictCard } from "./ResultExtras";
+import { BeforeNow } from "./InvestigationExtras";
+import { LinkBlock, QuickQuestions, useParentCheck, VerdictCard } from "./ResultExtras";
+import { WhyThisResult } from "./WhyThisResult";
 
 function Bullets({ items, ordered = false }: { items: string[]; ordered?: boolean }) {
-  const Tag = ordered ? "ol" : "ul";
+  if (ordered)
+    return (
+      <ol className="space-y-2" data-testid="steps">
+        {items.map((x, i) => (
+          <li key={i} className="flex items-start gap-3 rounded-2xl bg-white px-3 py-3 shadow-sm">
+            <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#c8f169] text-sm font-extrabold text-leaf-900">{i + 1}</span>
+            <span className="min-w-0 pt-0.5 text-base font-medium text-ink">{x}</span>
+          </li>
+        ))}
+      </ol>
+    );
   return (
-    <Tag className={`${ordered ? "list-decimal" : "list-disc"} space-y-2 pl-6 text-lg`}>
+    <ul className="space-y-1.5 text-base">
       {items.map((x, i) => (
-        <li key={i}>{x}</li>
+        <li key={i} className="flex items-start gap-2"><span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-leaf-500" /><span className="min-w-0">{x}</span></li>
       ))}
-    </Tag>
+    </ul>
   );
 }
 
-function Section({ title, icon, children, tone = "plain" }: { title: string; icon?: string; children: ReactNode; tone?: "plain" | "action" | "help" }) {
+const SECTION_ICON: Record<string, string> = { "🌿": "crop", "✅": "check", "👀": "inspect", "🧤": "warning", "📞": "info" };
+
+/** A result block: round icon + short title. `fold` makes it a closed row that opens in place (details stay one tap away, not on screen). */
+function Section({ title, icon, children, tone = "plain", fold = false }: { title: string; icon?: string; children: ReactNode; tone?: "plain" | "action" | "help"; fold?: boolean }) {
   const cls =
     tone === "action"
-      ? "rounded-2xl border-2 border-leaf-600 bg-leaf-50 p-5 shadow"
+      ? "rounded-3xl bg-leaf-50 p-4 ring-2 ring-[#c8f169] sm:p-5"
       : tone === "help"
-        ? "rounded-2xl border-2 border-amber-400 bg-amber-50 p-5"
+        ? "rounded-3xl bg-amber-50 p-4 ring-1 ring-amber-300 sm:p-5"
         : "card";
+  const chip = icon ? <span aria-hidden className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${tone === "help" ? "bg-amber-200 text-amber-900" : "bg-leaf-800 text-[#c8f169]"}`}><PlanIcon name={SECTION_ICON[icon] ?? "info"} size={20} /></span> : null;
+  if (fold)
+    return (
+      <details className={`plan-row ${cls}`}>
+        <summary className="flex min-h-[2.75rem] cursor-pointer list-none items-center gap-3 py-0 text-base font-bold text-leaf-800 [&::-webkit-details-marker]:hidden">
+          {chip}<span className="flex-1">{title}</span><span className="plan-chev text-mute"><PlanIcon name="chevron" size={20} /></span>
+        </summary>
+        <div className="mt-3 space-y-2">{children}</div>
+      </details>
+    );
   return (
     <section className={cls}>
-      <h2 className="mb-2 text-xl font-bold text-leaf-800">
-        {icon && <span aria-hidden className="mr-2">{icon}</span>}
-        {title}
-      </h2>
+      <h2 className="mb-3 flex items-center gap-3 text-lg font-bold text-leaf-800">{chip}{title}</h2>
       {children}
     </section>
   );
@@ -154,9 +176,10 @@ export default function Result() {
 
   return (
     <Page title={R.title(a.crop)} back="/history">
-      <p className="mb-4 text-base text-gray-700">
-        {a.farm_name} · {friendlyDate(a.created_at)}
-        {a.has_image && ` · ${R.photoIncluded}`}
+      <p className="mb-3 flex flex-wrap gap-2 text-sm font-semibold text-leaf-800">
+        <span className="chip">{a.farm_name}</span>
+        <span className="chip">{friendlyDate(a.created_at)}</span>
+        {a.has_image && <span className="chip">{R.photoIncluded}</span>}
       </p>
       {!haveForUi && (
         <div role="note" className="mb-4 space-y-2 rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-800">
@@ -184,61 +207,26 @@ export default function Result() {
       <div className="space-y-4">
         <LinkBlock a={a} r={r} parent={parent} />
         <VerdictCard r={r} lang={analysisLang} />
-        <QuickQuestions key={a.id} a={a} r={r} lang={analysisLang} />
-        <Section title={R.happening} icon="🌿">
-          <p className="text-base text-gray-700">{R.bestGuess}</p>
-          <p lang={analysisLang} className="text-xl font-bold">{r.likely_issue}</p>
-          <div className="mt-2"><SeverityBadge severity={r.severity} /></div>
-          {certainty && <p className="mt-3 text-base text-gray-800">{certainty}</p>}
-          <p lang={analysisLang} className="mt-2 text-base text-gray-800">{r.explanation}</p>
-          <p lang={analysisLang} className="mt-2 text-base text-gray-700">{r.uncertainty}</p>
-        </Section>
-
-        <DecisionPanel farmId={a.farm_id} analysisId={a.id} />
-
         <Section title={R.doNow} icon="✅" tone="action">
           <div lang={analysisLang}><Bullets items={doNow} ordered /></div>
         </Section>
 
-        {watch.length > 0 && (
-          <Section title={R.watch} icon="👀">
-            <div lang={analysisLang}><Bullets items={watch} /></div>
-          </Section>
-        )}
-
-        {r.precautions.length > 0 && (
-          <Section title={R.precautions} icon="🧤">
-            <div lang={analysisLang}><Bullets items={r.precautions} /></div>
-          </Section>
-        )}
-
         {r.when_to_seek_help && (
           <Section title={R.help} icon="📞" tone="help">
-            <p lang={analysisLang} className="text-lg">{r.when_to_seek_help}</p>
+            <p lang={analysisLang} className="text-base">{r.when_to_seek_help}</p>
           </Section>
         )}
 
-        {tip && (
-          <div role="note" lang={analysisLang} className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900">
-            <span aria-hidden>📷 </span>
-            {tip}
-          </div>
-        )}
+        <QuickQuestions key={a.id} a={a} r={r} lang={analysisLang} />
 
-        {questions.length > 0 && (
-          <Section title={R.moreInfo}>
-            <div lang={analysisLang}><Bullets items={questions} /></div>
-          </Section>
-        )}
+        <DecisionPanel farmId={a.farm_id} analysisId={a.id} />
 
-        <SourcesBlock r={a.result} />
-        <HowChecked r={a.result} />
-        <Hypotheses r={a.result} lang={originalLang} />
-        <BeforeNow a={a} />
-
-        {hasMore && (
-          <details className="card">
-            <summary className="text-lg font-semibold text-leaf-800">{R.moreDetails}</summary>
+        <WhyThisResult
+          r={a.result}
+          lang={originalLang}
+          moreDetails={hasMore ? (
+            <section className="rounded-2xl bg-leaf-50 p-3" data-testid="more-details">
+              <h3 className="text-base font-extrabold text-leaf-800">{t.ur.evidenceTitle}</h3>
             <div lang={analysisLang} className="mt-3 space-y-4 text-base">
               {r.observations && r.observations.length > 0 && (
                 <div>
@@ -281,8 +269,46 @@ export default function Result() {
                 </div>
               )}
             </div>
-          </details>
+            </section>
+          ) : null}
+        />
+
+        <Section title={R.happening} icon="🌿" fold>
+          <p className="text-base text-gray-700">{R.bestGuess}</p>
+          <p lang={analysisLang} className="text-xl font-bold">{r.likely_issue}</p>
+          <div className="mt-2"><SeverityBadge severity={r.severity} /></div>
+          {certainty && <p className="mt-3 text-base text-gray-800">{certainty}</p>}
+          <p lang={analysisLang} className="mt-2 text-base text-gray-800">{r.explanation}</p>
+          <p lang={analysisLang} className="mt-2 text-base text-gray-700">{r.uncertainty}</p>
+        </Section>
+
+        {watch.length > 0 && (
+          <Section title={R.watch} icon="👀" fold>
+            <div lang={analysisLang}><Bullets items={watch} /></div>
+          </Section>
         )}
+
+        {r.precautions.length > 0 && (
+          <Section title={R.precautions} icon="🧤" fold>
+            <div lang={analysisLang}><Bullets items={r.precautions} /></div>
+          </Section>
+        )}
+
+        {tip && (
+          <div role="note" lang={analysisLang} className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900">
+            <span aria-hidden>📷 </span>
+            {tip}
+          </div>
+        )}
+
+        {questions.length > 0 && (
+          <Section title={R.moreInfo} fold>
+            <div lang={analysisLang}><Bullets items={questions} /></div>
+          </Section>
+        )}
+
+
+        <BeforeNow a={a} />
 
         {a.weather ? <WeatherSummary w={a.weather} /> : <p className="px-1 text-sm text-gray-500">{R.weatherUnavailable}</p>}
 

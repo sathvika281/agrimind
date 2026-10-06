@@ -62,6 +62,29 @@ class LocationNotFound(WeatherError):
     pass
 
 
+@dataclasses.dataclass
+class DayForecast:
+    """One REAL forecast day from the provider. Only fields the provider supplies; a missing one is None, never guessed."""
+
+    date: str  # YYYY-MM-DD in the farm's local time
+    rain_mm: float | None = None
+    temp_min_c: float | None = None
+    temp_max_c: float | None = None
+    rain_probability_pct: float | None = None
+    # Smart-alert fields (all optional; None = the provider did not supply it, never guessed)
+    wind_ms: float | None = None  # strongest sustained wind of the day, metres per second
+    gust_ms: float | None = None  # strongest gust of the day
+    thunderstorm: bool | None = None  # the provider's own weather code says thunderstorm at some point that day
+    fetched_at: str | None = None  # when this forecast was really fetched (kept through the cache, so freshness is true)
+    source: str | None = None  # "openweather" | "open-meteo"
+
+    def to_dict(self) -> dict:
+        return dataclasses.asdict(self)
+
+
+FORECAST_DAYS = 5  # the free OpenWeather forecast reaches 5 days; Open-Meteo is asked for the same horizon
+
+
 def _num(v):
     return float(v) if isinstance(v, (int, float)) else None
 
@@ -112,6 +135,7 @@ class WeatherClient:
         self._coords = _TTLCache(self._clock)
         self._missing = _TTLCache(self._clock)
         self._wx = _TTLCache(self._clock)
+        self._daily = _TTLCache(self._clock)
         self._cooldown_until = 0.0
 
     def _get(self, url: str, params: dict, deadline: float) -> dict:
@@ -205,6 +229,43 @@ class WeatherClient:
         self._wx.put(cache_key, ctx, WEATHER_TTL)
         return dataclasses.replace(ctx)
 
+    def forecast_days(self, location: str) -> list[DayForecast]:
+        deadline = http_helper._clock() + _budget_var.get()
+        lat, lon, _label = self.resolve_location(location, deadline)
+        key = (round(lat, 2), round(lon, 2))
+        cached = self._daily.get(key)
+        if cached is not None:
+            return list(cached)
+        data = self._get(
+            FORECAST_URL,
+            {
+                "latitude": lat, "longitude": lon, "timezone": "auto", "forecast_days": FORECAST_DAYS,
+                "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code,wind_speed_10m_max,wind_gusts_10m_max",
+                "wind_speed_unit": "ms",
+            },
+            deadline,
+        )
+        daily = data.get("daily") or {}
+        dates = daily.get("time") or []
+        if not dates:
+            raise WeatherError("no daily forecast")
+
+        def at(name, i):
+            arr = daily.get(name) or []
+            return _num(arr[i]) if i < len(arr) else None
+
+        fetched = datetime.now(timezone.utc).isoformat()
+        days = [
+            DayForecast(date=str(d)[:10], rain_mm=at("precipitation_sum", i), temp_min_c=at("temperature_2m_min", i),
+                        temp_max_c=at("temperature_2m_max", i), rain_probability_pct=at("precipitation_probability_max", i),
+                        wind_ms=at("wind_speed_10m_max", i), gust_ms=at("wind_gusts_10m_max", i),
+                        thunderstorm=(at("weather_code", i) in (95, 96, 99)) if at("weather_code", i) is not None else None,
+                        fetched_at=fetched, source="open-meteo")
+            for i, d in enumerate(dates[:FORECAST_DAYS])
+        ]
+        self._daily.put(key, days, WEATHER_TTL)
+        return list(days)
+
 
 OWM_GEO = "https://api.openweathermap.org/geo/1.0/direct"
 OWM_NOW = "https://api.openweathermap.org/data/2.5/weather"
@@ -292,6 +353,44 @@ class OpenWeatherClient(WeatherClient):
         self._wx.put(cache_key, ctx, WEATHER_TTL)
         return dataclasses.replace(ctx)
 
+    def forecast_days(self, location: str) -> list[DayForecast]:
+        """Real days from the 3-hourly forecast, grouped by the farm's LOCAL date (the first day may be partial)."""
+        deadline = http_helper._clock() + _budget_var.get()
+        lat, lon, _label = self.resolve_location(location, deadline)
+        key = (round(lat, 2), round(lon, 2))
+        cached = self._daily.get(key)
+        if cached is not None:
+            return list(cached)
+        fc = self._get(OWM_FORECAST, {"lat": lat, "lon": lon, "units": "metric"}, deadline)
+        entries = [e for e in (fc.get("list") or []) if isinstance(e, dict) and isinstance(e.get("dt"), (int, float))]
+        if not entries:
+            raise WeatherError("no forecast data")
+        tz = int((fc.get("city") or {}).get("timezone") or 0)
+        fetched = datetime.now(timezone.utc).isoformat()
+        by_day: dict[str, list[dict]] = {}
+        for e in entries:
+            by_day.setdefault(datetime.fromtimestamp(e["dt"] + tz, timezone.utc).date().isoformat(), []).append(e)
+        days = []
+        for d in sorted(by_day)[:FORECAST_DAYS]:
+            es = by_day[d]
+            temps_max = [_num((e.get("main") or {}).get("temp_max")) for e in es]
+            temps_min = [_num((e.get("main") or {}).get("temp_min")) for e in es]
+            pops = [_num(e.get("pop")) for e in es]
+            temps_max, temps_min, pops = [x for x in temps_max if x is not None], [x for x in temps_min if x is not None], [x for x in pops if x is not None]
+            winds = [x for x in (_num((e.get("wind") or {}).get("speed")) for e in es) if x is not None]
+            gusts = [x for x in (_num((e.get("wind") or {}).get("gust")) for e in es) if x is not None]
+            codes = [w.get("id") for e in es for w in (e.get("weather") or []) if isinstance(w, dict) and isinstance(w.get("id"), int)]
+            days.append(DayForecast(
+                date=d, rain_mm=_sum((e.get("rain") or {}).get("3h", 0) for e in es) or 0.0,
+                temp_min_c=min(temps_min) if temps_min else None, temp_max_c=max(temps_max) if temps_max else None,
+                rain_probability_pct=round(max(pops) * 100) if pops else None,
+                wind_ms=max(winds) if winds else None, gust_ms=max(gusts) if gusts else None,
+                thunderstorm=any(200 <= c <= 232 for c in codes) if codes else None,  # OpenWeather group 2xx = thunderstorm
+                fetched_at=fetched, source="openweather",
+            ))
+        self._daily.put(key, days, WEATHER_TTL)
+        return list(days)
+
 
 class ChainClient:
     """The provider chain used by the app: OpenWeather first (only when a key is set), Open-Meteo as the backup.
@@ -323,6 +422,24 @@ class ChainClient:
             raise LocationNotFound(location)
         raise last or WeatherError("unavailable")
 
+    def forecast_days(self, location: str) -> list[DayForecast]:
+        not_found = 0
+        last: Exception | None = None
+        clients = self.active()
+        for c in clients:
+            try:
+                days = c.forecast_days(location)
+                if days:
+                    return days
+            except LocationNotFound:
+                not_found += 1
+            except Exception as e:  # noqa: BLE001
+                log.warning("forecast provider failed provider=%s category=%s", "openweather" if c is self.openweather else "openmeteo", type(e).__name__)
+                last = e
+        if last is None and not_found == len(clients):
+            raise LocationNotFound(location)
+        raise last or WeatherError("unavailable")
+
 
 client = ChainClient()
 
@@ -339,6 +456,26 @@ def try_weather(location: str, budget: float | None = None) -> tuple[WeatherCont
         return None, NOTE_NO_LOCATION
     except Exception as e:  # noqa: BLE001 - weather must never break analysis
         log.warning("weather unavailable category=%s", type(e).__name__)
+        return None, NOTE_UNAVAILABLE
+    finally:
+        _budget_var.reset(token)
+
+
+def try_forecast(location: str, budget: float | None = None) -> tuple[list[DayForecast] | None, str | None]:
+    """Real daily forecast for a farm's place. Never raises: (days, None) or (None, why). No place -> no forecast;
+    a provider (or a test double) without day-level data -> (None, why). Nothing is ever simulated."""
+    if not location or not location.strip():
+        return None, "Weather information unavailable: this farm has no location."
+    fetch = getattr(client, "forecast_days", None)
+    if fetch is None:
+        return None, NOTE_UNAVAILABLE
+    token = _budget_var.set(budget if budget is not None else ROUTE_BUDGET_S)
+    try:
+        return fetch(location), None
+    except LocationNotFound:
+        return None, NOTE_NO_LOCATION
+    except Exception as e:  # noqa: BLE001
+        log.warning("forecast unavailable category=%s", type(e).__name__)
         return None, NOTE_UNAVAILABLE
     finally:
         _budget_var.reset(token)

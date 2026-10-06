@@ -16,7 +16,10 @@
     "test:account": "node scripts/account.test.mjs",
     "test:agentic": "node scripts/agentic.test.mjs",
     "test:dossier": "node scripts/dossier.test.mjs",
-    "test:weathertips": "node scripts/weathertips.test.mjs"
+    "test:weathertips": "node scripts/weathertips.test.mjs",
+    "test:plan": "node scripts/plan.test.mjs",
+    "test:economics": "node scripts/economics.test.mjs",
+    "test:weatheralerts": "node scripts/weatheralerts.test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -16,6 +16,8 @@ import History from "./pages/History";
 import Account from "./pages/Account";
 import Diary from "./pages/Diary";
 import WeatherPage from "./pages/WeatherPage";
+import FarmPlanPage from "./pages/FarmPlan";
+import EconomicsPage from "./pages/Economics";
 import Insights from "./pages/Insights";
 import Privacy from "./pages/Privacy";
 import Profile from "./pages/Profile";
@@ -43,6 +45,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <Route path="/insights" element={<Insights />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/diary" element={<Diary />} />
+                <Route path="/plan" element={<FarmPlanPage />} />
+                <Route path="/economics" element={<EconomicsPage />} />
                 <Route path="/weather" element={<WeatherPage />} />
                 <Route path="/account" element={<Account />} />
               </Route>

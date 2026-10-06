@@ -130,3 +130,20 @@ Edit `GEMINI_API_KEY` in `.env.production` on the server, then `docker compose u
 - **Timeouts:** weather for an analysis keeps a short 4 s budget (it must never slow a check); the Weather page waits up to 10 s, which is what slow cloud networks need.
 - **Weather tab tips:** `GET /farms/{id}/weather/tips` returns coded, non-chemical coping tips and the real measured conditions behind them (thresholds: `services/weather_risk.py` plus wind >= 30 km/h and cold night <= 10 C in `services/weather_tips.py`). They are general rules of thumb: have an agronomist review them for your region.
 - **If weather still fails on Render:** the log line `weather request failed category=...` (or `weather provider failed ...`) says why. Share only that line, never the key.
+
+## 14. Farm plan (Adaptive Farm Planning)
+
+- **What it is:** its own page (`/plan`, sidebar "Farm plan"), separate from Overview and Insights. One deterministic planning agent (`backend/app/services/planning/agent.py`) builds a plan from the real daily forecast, the farm's crop facts, the latest stored crop check and the farmer's own planned activities, and re-plans when something material changes. No model call, no soil or market data, nothing simulated.
+- **When it re-plans:** on opening the page, on "Check for changes", after the farmer edits their planned activities or field condition, and after a new crop check. A new version is stored only if the forecast changed materially (rain crossing 10 mm or moving by 10 mm, max temperature crossing 35 C or moving by 5 C), a new check exists, or the inputs changed. There are no background jobs or notifications.
+- **Weather:** uses the same OpenWeather-first/Open-Meteo-backup chain; the daily forecast reaches about 5 days. If the forecast can't be fetched the last real snapshot is kept (and said so); with no forecast at all, weather steps are left out.
+- **Database:** one new additive table, `farm_plans` (plan versions, kept per farm, newest 100). `create_all` adds it automatically when a server starts on a database; `python -m app.cli migrate` lists it under new tables. It is included in "Download my data" and deleted with the account.
+- **Review before real use:** the thresholds (`SIGNIFICANT_RAIN_MM`, `HOT_C`, ...) are general rules of thumb for an agronomist to review, and the Telugu text for a Telugu speaker.
+
+## 15. Crop Economics & Selling Intelligence
+
+A separate top-level page (`/economics`, sidebar item **Economics** under DECIDE). It never needs a model call and never touches the network.
+
+- **What it uses:** the farm profile (crop, planting date), the latest crop check and the diary through the shared farm context, plus the farmer's own numbers: area, yield range, marketable share, costs and market quotes (market, date, price, distance, transport). Assumptions are stored in one table, `farm_economics` (one row per farm, owner-scoped, included in `/auth/me/export`, removed on account delete). The farm profile itself is never changed.
+- **What is real / not:** all figures are deterministic arithmetic over the farmer's inputs. Missing inputs show as "Not available" or "Needs your estimate" and are never defaulted or counted as zero. **No live mandi price feed is connected, and there is no price forecast or export-price source**: the page says so.
+- **Agent:** one Economics agent (deterministic, structured output, no LLM) run by a LangGraph workflow whose executed steps are recorded and shown on the page.
+- **`ECONOMICS_DEMO_MARKET=true`** (default off) adds clearly labelled **DEMO DATA** example prices so the screen can be tried without typing quotes. Never enable it for farmers' real use.

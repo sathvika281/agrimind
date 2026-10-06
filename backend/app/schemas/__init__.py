@@ -2,7 +2,7 @@ import re
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -785,3 +785,128 @@ class PatternsOut(BaseModel):
     enough: bool
     total: int
     patterns: list[PatternOut] = Field(default_factory=list)
+
+
+# ---- Adaptive Farm Planning (coded plan; the frontend words it in English/Telugu)
+PLAN_ACTIVITY_KINDS = ("sowing", "transplanting", "irrigation", "weeding", "harvest", "other")
+PLAN_FIELD_CONDITIONS = ("none", "waterlogged", "dry", "pests_seen", "wilting")
+
+
+class PlanActivityIn(BaseModel):
+    id: str | None = Field(default=None, max_length=16)
+    kind: str
+    date: date
+    note: str = Field(default="", max_length=120)
+
+    @field_validator("kind")
+    @classmethod
+    def _kind(cls, v: str) -> str:
+        if v not in PLAN_ACTIVITY_KINDS:
+            raise ValueError("unknown activity")
+        return v
+
+    @field_validator("date")
+    @classmethod
+    def _date(cls, v: date) -> date:
+        today = date.today()
+        if not (today - timedelta(days=1) <= v <= today + timedelta(days=366)):
+            raise ValueError("date out of range")
+        return v
+
+    @field_validator("note", mode="before")
+    @classmethod
+    def _note(cls, v):
+        return "" if v is None else str(v).strip()[:120]
+
+
+class PlanInputsIn(BaseModel):
+    activities: list[PlanActivityIn] = Field(default_factory=list, max_length=10)
+    field_condition: str = "none"
+
+    @field_validator("field_condition")
+    @classmethod
+    def _fc(cls, v: str) -> str:
+        if v not in PLAN_FIELD_CONDITIONS:
+            raise ValueError("unknown field condition")
+        return v
+
+
+class PlanOut(BaseModel):
+    farm_id: int
+    version: int
+    created_at: datetime
+    trigger: str
+    inputs: dict
+    plan: dict
+    changes: dict
+    forecast: list[dict] = Field(default_factory=list)
+    changed: bool = False  # this call created a new version
+    forecast_source: str = "none"  # live | last_snapshot | none
+    forecast_note: str | None = None
+    versions: int = 1
+
+
+class PlanVersionOut(BaseModel):
+    version: int
+    created_at: datetime
+    trigger: str
+    changes: dict
+    items: int
+
+
+# ---------- crop economics ----------
+ECON_COSTS = ["seeds", "seedlings", "fertilizer", "labour", "irrigation", "machinery", "land_preparation", "harvesting", "transport", "storage", "other"]
+
+
+class EconPriceIn(BaseModel):
+    date: date
+    price: float = Field(gt=0, le=1_000_000)  # INR per quintal
+
+    @field_validator("date")
+    @classmethod
+    def _not_future(cls, v: date) -> date:
+        if v > datetime.now(timezone.utc).date():
+            raise ValueError("a price date cannot be in the future")
+        return v
+
+
+class EconMarketIn(BaseModel):
+    id: str | None = Field(default=None, max_length=16)
+    name: str = Field(min_length=1, max_length=60)
+    distance_km: float | None = Field(default=None, ge=0, le=5000)
+    transport_per_quintal: float | None = Field(default=None, ge=0, le=100_000)
+    prices: list[EconPriceIn] = Field(default_factory=list, max_length=10)
+
+
+class EconInputsIn(BaseModel):
+    """What the farmer states. Everything is optional: a missing value is reported as missing, never defaulted."""
+
+    area: float | None = Field(default=None, gt=0, le=10_000)
+    area_unit: Literal["acre", "hectare"] = "acre"
+    yield_low: float | None = Field(default=None, ge=0, le=100_000)
+    yield_high: float | None = Field(default=None, ge=0, le=100_000)
+    marketable_low_pct: float | None = Field(default=None, ge=0, le=100)
+    marketable_high_pct: float | None = Field(default=None, ge=0, le=100)
+    days_to_harvest_low: int | None = Field(default=None, ge=1, le=1000)
+    days_to_harvest_high: int | None = Field(default=None, ge=1, le=1000)
+    harvest_start: date | None = None
+    harvest_end: date | None = None
+    costs: dict[str, float] = Field(default_factory=dict)
+    markets: list[EconMarketIn] = Field(default_factory=list, max_length=5)
+
+    @model_validator(mode="after")
+    def _ranges(self):
+        for lo, hi, what in (("yield_low", "yield_high", "yield"), ("marketable_low_pct", "marketable_high_pct", "marketable share"), ("days_to_harvest_low", "days_to_harvest_high", "days to harvest")):
+            a, b = getattr(self, lo), getattr(self, hi)
+            if (a is None) != (b is None):
+                raise ValueError(f"give both the low and the high {what}, or neither")
+            if a is not None and a > b:
+                raise ValueError(f"{what}: low is above high")
+        if (self.harvest_start is None) != (self.harvest_end is None) or (self.harvest_start and self.harvest_end < self.harvest_start):
+            raise ValueError("harvest window needs a start and an end in order")
+        for k, v in self.costs.items():
+            if k not in ECON_COSTS:
+                raise ValueError(f"unknown cost category: {k}")
+            if not 0 <= v <= 1_000_000_000:
+                raise ValueError("a cost must be between 0 and 1,000,000,000")
+        return self

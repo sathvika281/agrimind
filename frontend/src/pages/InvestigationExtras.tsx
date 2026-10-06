@@ -10,16 +10,17 @@ import { useLang } from "../LanguageContext";
 const scriptOf = (text: string): "te" | "en" => (/[ఀ-౿]/.test(text) ? "te" : "en");
 
 /** Possible explanations, never a diagnosis and never a score. Shown only for investigations that produced candidates. */
-export function Hypotheses({ r, lang }: { r: AnalysisResult; lang: string }) {
+export function Hypotheses({ r, lang, embedded = false }: { r: AnalysisResult; lang: string; embedded?: boolean }) {
   const { t } = useLang();
   const H = t.hy;
   const d = r.dossier;
   const items = d?.hypotheses ?? [];
   if (!d || items.length === 0) return null;
   const help = d.verify.filter((f) => t.dz.verify[f.kind]);
+  const Root = embedded ? "section" : "details";
   return (
-    <details className="card" data-testid="hypotheses" open>
-      <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{H.title}</summary>
+    <Root className={embedded ? "rounded-2xl bg-leaf-50 p-3" : "card"} data-testid="hypotheses">
+      {embedded ? <h3 className="text-base font-extrabold text-leaf-800">{H.title}</h3> : <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{H.title}</summary>}
       <p className="mt-2 text-base text-mute">{H.note}</p>
       <ol className="mt-3 space-y-4">
         {items.map((h, i) => (
@@ -53,7 +54,7 @@ export function Hypotheses({ r, lang }: { r: AnalysisResult; lang: string }) {
           </ul>
         </div>
       )}
-    </details>
+    </Root>
   );
 }
 
@@ -78,9 +79,17 @@ function Side({ title, c, id }: { title: string; c: Comparison["previous"]; id: 
 /** This check next to the previous relevant one, with qualitative changes and a direction only when evidence supports one. */
 export function BeforeNow({ a }: { a: Analysis }) {
   const { t } = useLang();
+  return (
+    <BeforeNowView id={a.id} version={String(a.parent_id ?? "")} extra={<Link to="/insights?tab=journey" className="link-btn mt-2 inline-flex min-h-[2.75rem] items-center text-sm" data-testid="journey-link">{t.bn.journeyLink}</Link>} />
+  );
+}
+
+/** Reused: the Result page (as a card) and the Crop Journey (per check, `embedded`). Same endpoint, same comparison logic. */
+export function BeforeNowView({ id, version = "", embedded = false, extra }: { id: number; version?: string; embedded?: boolean; extra?: React.ReactNode }) {
+  const { t } = useLang();
   const B = t.bn;
-  const { data } = useKeyedData<Comparison | null>(String(a.id), String(a.parent_id ?? ""), (id) => api.analysisComparison(id));
-  if (!data) return null;
+  const { data } = useKeyedData<Comparison | null>(String(id), version, (x) => api.analysisComparison(x));
+  if (!data) return embedded ? <p className="rounded-xl bg-leaf-50 p-3 text-sm text-mute" data-testid="bn-none">{B.noEarlier}</p> : null;
   const c = data.compare;
   const changes: string[] = [];
   if (B.issue[c.issue]) changes.push(B.issue[c.issue]);
@@ -88,9 +97,10 @@ export function BeforeNow({ a }: { a: Analysis }) {
   if (B.unc[c.uncertainty.change]) changes.push(B.unc[c.uncertainty.change]);
   if (c.model_change && B.model[c.model_change]) changes.push(B.model[c.model_change]);
   const obs = c.observations;
+  const Root = embedded ? "section" : "details";
   return (
-    <details className="card" data-testid="before-now" open>
-      <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{B.title}</summary>
+    <Root className={embedded ? "rounded-2xl bg-leaf-50 p-3" : "card"} data-testid="before-now">
+      {embedded ? <h3 className="text-base font-extrabold text-leaf-800">{B.title}</h3> : <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{B.title}</summary>}
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Side title={B.previous} c={data.previous} id="bn-previous" />
         <Side title={B.now} c={data.now} id="bn-now" />
@@ -106,6 +116,7 @@ export function BeforeNow({ a }: { a: Analysis }) {
         <span className="font-bold text-leaf-800">{B.directionTitle}: </span>{B.direction[c.direction]}
       </p>
       <p className="mt-1 text-sm text-mute">{B.basis}</p>
-    </details>
+      {extra}
+    </Root>
   );
 }

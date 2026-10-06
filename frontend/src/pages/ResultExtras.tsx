@@ -6,6 +6,7 @@ import { ErrorBox, SeverityBadge } from "../components";
 import { friendlyDate } from "../copy";
 import { useLang } from "../LanguageContext";
 import { useStatus } from "../overview/StatusContext";
+import { FieldBackdrop } from "../plan/FieldBackdrop";
 
 /** The earlier check this one refines or follows up (the farmer's own; fetched once, never polled). */
 export function useParentCheck(a: Analysis | null) {
@@ -29,11 +30,12 @@ export function VerdictCard({ r, lang }: { r: AnalysisResult; lang: string }) {
   if (!r.verdict) return null;
   const word = r.uncertainty_level ? R.confidence[r.uncertainty_level] : "";
   return (
-    <section className="rounded-2xl border-2 border-leaf-600 bg-white p-5 shadow" aria-label={R.verdictTitle} data-testid="verdict-card">
-      <p className="text-sm font-semibold text-mute">{R.verdictTitle}</p>
-      <p lang={lang} className="mt-1 text-2xl font-extrabold leading-snug text-leaf-900">{r.verdict}</p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {word && <span className="chip text-sm" data-testid="verdict-confidence">{word}</span>}
+    <section className="plan-hero photo-light p-5 sm:p-6" aria-label={R.verdictTitle} data-testid="verdict-card">
+      <FieldBackdrop photo="/img/result.jpg" />
+      <p className="text-xs font-bold uppercase tracking-widest text-white/80">{R.verdictTitle}</p>
+      <p lang={lang} className="mt-2 text-2xl font-extrabold leading-snug text-white sm:text-3xl">{r.verdict}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {word && <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-white" data-testid="verdict-confidence">{word}</span>}
         <SeverityBadge severity={r.severity} />
       </div>
     </section>
@@ -160,7 +162,7 @@ export function LinkBlock({ a, r, parent }: { a: Analysis; r: AnalysisResult; pa
 
 /** The Investigation Dossier: which steps really ran, what was considered, why, what is unknown, what would verify it.
  *  Built from the agents' real outputs; shown only when the agentic investigation produced it. No reasoning text. */
-export function HowChecked({ r }: { r: AnalysisResult }) {
+export function HowChecked({ r, embedded = false }: { r: AnalysisResult; embedded?: boolean }) {
   const { t } = useLang();
   const G = t.ag;
   const Z = t.dz;
@@ -168,9 +170,10 @@ export function HowChecked({ r }: { r: AnalysisResult }) {
   if (steps.length === 0) return null;
   const d = r.dossier;
   const h3 = "mt-4 text-base font-bold text-leaf-800";
+  const Root = embedded ? "section" : "details";
   return (
-    <details className="card" data-testid="how-checked">
-      <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{Z.title}</summary>
+    <Root className={embedded ? "rounded-2xl bg-leaf-50 p-3" : "card"} data-testid="how-checked">
+      {embedded ? <h3 className="text-base font-extrabold text-leaf-800">{Z.title}</h3> : <summary className="min-h-[2.5rem] cursor-pointer text-lg font-semibold text-leaf-800">{Z.title}</summary>}
       <h3 className={h3}>{Z.agentsTitle}</h3>
       <ul className="mt-1 space-y-1 text-base">
         {steps.map((s, i) => {
@@ -225,19 +228,19 @@ export function HowChecked({ r }: { r: AnalysisResult }) {
           )}
         </div>
       )}
-    </details>
+    </Root>
   );
 }
 
 /** Trusted documents that were really retrieved and relied on. Shown only when there are some. */
-export function SourcesBlock({ r }: { r: AnalysisResult }) {
+export function SourcesBlock({ r, embedded = false }: { r: AnalysisResult; embedded?: boolean }) {
   const { t } = useLang();
   const G = t.ag;
   const sources = r.sources ?? [];
   if (sources.length === 0) return null;
   return (
-    <section className="card space-y-2" data-testid="sources">
-      <h2 className="text-xl font-bold text-leaf-800">{G.sourcesTitle}</h2>
+    <section className={embedded ? "space-y-2 rounded-2xl bg-leaf-50 p-3" : "card space-y-2"} data-testid="sources">
+      {embedded ? <h3 className="text-base font-extrabold text-leaf-800">{G.sourcesTitle}</h3> : <h2 className="text-xl font-bold text-leaf-800">{G.sourcesTitle}</h2>}
       <p className="text-base text-mute">{G.sourcesNote}</p>
       <ul className="space-y-2 text-base">
         {sources.map((s) => (
